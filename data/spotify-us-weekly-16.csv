@@ -1,0 +1,161 @@
+date,name,artist,value,category,rank
+1,Shape of You,Ed Sheeran,10969080,male,1
+1,Bad and Boujee,Migos,10112877,group,2
+1,Fake Love,Drake,8459802,male,3
+1,Castle on the Hill,Ed Sheeran,7600859,male,4
+1,Starboy,The Weeknd,7245714,male,5
+1,I Don't Wanna Live Forever,ZAYN,5940766,male,6
+1,Bounce Back,Big Sean,5384798,male,7
+1,Black Beatles,Rae Sremmurd,5319110,group,8
+1,Caroline,Aminé,5264976,male,9
+1,Closer,The Chainsmokers,5145003,group,10
+2,Bad and Boujee,Migos,10639198,group,1
+2,Shape of You,Ed Sheeran,10010914,male,2
+2,Fake Love,Drake,8954829,male,3
+2,Paris,The Chainsmokers,8600493,group,4
+2,Starboy,The Weeknd,7302600,male,5
+2,I Don't Wanna Live Forever,ZAYN,6754628,male,6
+2,Bounce Back,Big Sean,5931952,male,7
+2,Caroline,Aminé,5469181,male,8
+2,Bad Things,Machine Gun Kelly,5420165,male,9
+2,Black Beatles,Rae Sremmurd,5105224,group,10
+3,Bad and Boujee,Migos,9968813,group,1
+3,Shape of You,Ed Sheeran,9937816,male,2
+3,Fake Love,Drake,8258163,male,3
+3,Paris,The Chainsmokers,7477760,group,4
+3,Starboy,The Weeknd,6762822,male,5
+3,I Don't Wanna Live Forever,ZAYN,6578082,male,6
+3,Bounce Back,Big Sean,6044801,male,7
+3,iSpy,KYLE,5452817,male,8
+3,Caroline,Aminé,5293086,male,9
+3,Bad Things,Machine Gun Kelly,5166731,male,10
+4,Bad and Boujee,Migos,11504142,group,1
+4,Shape of You,Ed Sheeran,10256249,male,2
+4,Fake Love,Drake,7513713,male,3
+4,I Don't Wanna Live Forever,ZAYN,7490530,male,4
+4,Paris,The Chainsmokers,7307665,group,5
+4,T-Shirt,Migos,6808471,group,6
+4,Bounce Back,Big Sean,6126440,male,7
+4,iSpy,KYLE,5809582,male,8
+4,Starboy,The Weeknd,5808972,male,9
+4,Caroline,Aminé,5129571,male,10
+5,Shape of You,Ed Sheeran,10456635,male,1
+5,Bad and Boujee,Migos,10243411,group,2
+5,Bounce Back,Big Sean,8704702,male,3
+5,I Don't Wanna Live Forever,ZAYN,7677509,male,4
+5,Paris,The Chainsmokers,6923350,group,5
+5,Fake Love,Drake,6758416,male,6
+5,iSpy,KYLE,6002025,male,7
+5,No Favors,Big Sean,5932968,male,8
+5,T-Shirt,Migos,5919933,group,9
+5,Moves,Big Sean,5491621,male,10
+6,Shape of You,Ed Sheeran,10934411,male,1
+6,Bad and Boujee,Migos,9278288,group,2
+6,I Don't Wanna Live Forever,ZAYN,8201971,male,3
+6,Bounce Back,Big Sean,7486747,male,4
+6,iSpy,KYLE,6662491,male,5
+6,Paris,The Chainsmokers,6457503,group,6
+6,Fake Love,Drake,6282816,male,7
+6,T-Shirt,Migos,5556143,group,8
+6,Starboy,The Weeknd,5284459,male,9
+6,Chained To The Rhythm,Katy Perry,5258434,female,10
+7,Shape of You,Ed Sheeran,11094172,male,1
+7,Bad and Boujee,Migos,8604828,group,2
+7,It Ain't Me,Kygo,7597692,male,3
+7,I Don't Wanna Live Forever,ZAYN,7547964,male,4
+7,iSpy,KYLE,7386389,male,5
+7,Bounce Back,Big Sean,7092037,male,6
+7,Paris,The Chainsmokers,6360991,group,7
+7,That's What I Like,Bruno Mars,5912584,male,8
+7,Fake Love,Drake,5884045,male,9
+7,Congratulations,Post Malone,5720476,male,10
+8,Shape of You,Ed Sheeran,10777772,male,1
+8,Something Just Like This,The Chainsmokers,8825664,group,2
+8,iSpy,KYLE,8391524,male,3
+8,Bad and Boujee,Migos,8026650,group,4
+8,It Ain't Me,Kygo,7532158,male,5
+8,Bounce Back,Big Sean,6923692,male,6
+8,I Don't Wanna Live Forever,ZAYN,6727206,male,7
+8,That's What I Like,Bruno Mars,6710236,male,8
+8,Slide,Calvin Harris,6335750,male,9
+8,Congratulations,Post Malone,6292317,male,10
+9,Shape of You,Ed Sheeran,14514004,male,1
+9,iSpy,KYLE,8766667,male,2
+9,That's What I Like,Bruno Mars,8295295,male,3
+9,Bad and Boujee,Migos,7536649,group,4
+9,Mask Off,Future,7276281,male,5
+9,Something Just Like This,The Chainsmokers,7199494,group,6
+9,Galway Girl,Ed Sheeran,7180819,male,7
+9,It Ain't Me,Kygo,7063835,male,8
+9,Tunnel Vision,Kodak Black,6994936,male,9
+9,Castle on the Hill,Ed Sheeran,6692699,male,10
+10,Shape of You,Ed Sheeran,12232129,male,1
+10,Mask Off,Future,9698196,male,2
+10,iSpy,KYLE,8585912,male,3
+10,That's What I Like,Bruno Mars,8324022,male,4
+10,Tunnel Vision,Kodak Black,7362300,male,5
+10,Bad and Boujee,Migos,6841754,group,6
+10,It Ain't Me,Kygo,6744950,male,7
+10,Congratulations,Post Malone,6577117,male,8
+10,Something Just Like This,The Chainsmokers,6411200,group,9
+10,Galway Girl,Ed Sheeran,6367733,male,10
+11,Passionfruit,Drake,13517518,male,1
+11,Portland,Drake,11062342,male,2
+11,Shape of You,Ed Sheeran,10771287,male,3
+11,Free Smoke,Drake,9733725,male,4
+11,Mask Off,Future,9556060,male,5
+11,Gyalchester,Drake,8818901,male,6
+11,iSpy,KYLE,8191971,male,7
+11,Blem,Drake,8010079,male,8
+11,That's What I Like,Bruno Mars,7986827,male,9
+11,No Long Talk,Drake,7960234,male,10
+12,Passionfruit,Drake,13339705,male,1
+12,Mask Off,Future,10560128,male,2
+12,Shape of You,Ed Sheeran,10123353,male,3
+12,Portland,Drake,9871070,male,4
+12,iSpy,KYLE,8511806,male,5
+12,That's What I Like,Bruno Mars,8292776,male,6
+12,Gyalchester,Drake,7323737,male,7
+12,Tunnel Vision,Kodak Black,6921418,male,8
+12,Blem,Drake,6807187,male,9
+12,The Heart Part 4,Kendrick Lamar,6655660,male,10
+13,HUMBLE.,Kendrick Lamar,15584467,male,1
+13,Mask Off,Future,11297804,male,2
+13,Passionfruit,Drake,10541634,male,3
+13,Shape of You,Ed Sheeran,9140563,male,4
+13,XO TOUR Llif3,Lil Uzi Vert,8342003,male,5
+13,iSpy,KYLE,8239581,male,6
+13,That's What I Like,Bruno Mars,8197761,male,7
+13,Portland,Drake,8110027,male,8
+13,Tunnel Vision,Kodak Black,7749323,male,9
+13,Location,Khalid,6492464,male,10
+14,HUMBLE.,Kendrick Lamar,14685844,male,1
+14,Mask Off,Future,12264148,male,2
+14,XO TOUR Llif3,Lil Uzi Vert,9921971,male,3
+14,Passionfruit,Drake,9384660,male,4
+14,Shape of You,Ed Sheeran,8468722,male,5
+14,iSpy,KYLE,8301237,male,6
+14,That's What I Like,Bruno Mars,8188089,male,7
+14,Something Just Like This,The Chainsmokers,7781762,group,8
+14,Portland,Drake,7264960,male,9
+14,Tunnel Vision,Kodak Black,7060393,male,10
+15,HUMBLE.,Kendrick Lamar,24035443,male,1
+15,DNA.,Kendrick Lamar,20066644,male,2
+15,ELEMENT.,Kendrick Lamar,14166478,male,3
+15,LOYALTY. FEAT. RIHANNA.,Kendrick Lamar,13393440,male,4
+15,LOVE. FEAT. ZACARI.,Kendrick Lamar,11949608,male,5
+15,Mask Off,Future,11196745,male,6
+15,YAH.,Kendrick Lamar,11188920,male,7
+15,XXX. FEAT. U2.,Kendrick Lamar,10769732,male,8
+15,FEEL.,Kendrick Lamar,10324685,male,9
+15,PRIDE.,Kendrick Lamar,9974024,male,10
+16,HUMBLE.,Kendrick Lamar,20017050,male,1
+16,DNA.,Kendrick Lamar,14489827,male,2
+16,Mask Off,Future,10968796,male,3
+16,Despacito - Remix,Luis Fonsi,10924444,male,4
+16,XO TOUR Llif3,Lil Uzi Vert,10278300,male,5
+16,ELEMENT.,Kendrick Lamar,9028611,male,6
+16,LOVE. FEAT. ZACARI.,Kendrick Lamar,8860544,male,7
+16,LOYALTY. FEAT. RIHANNA.,Kendrick Lamar,8491077,male,8
+16,Passionfruit,Drake,7912671,male,9
+16,iSpy,KYLE,7775228,male,10

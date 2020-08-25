@@ -1,3 +1,245 @@
-.hello {
-    color: blue;
+#navigation {
+    padding: 0rem 1rem;
+}
+
+#navigation span{
+    font-weight: bold;
+}
+
+#editing {
+    height: 520px;
+    width: 220px;
+}
+
+#select-item {
+    height: 130px;
+}
+
+#select-item option {
+    color: #212529;
+    font-size: 0.85rem;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+}
+
+#input-text-range-from, 
+#input-text-range-to {
+    display: inline;
+    width: 83px;
+}
+
+#input-caption {
+    resize: none;
+    height: 60px;
+}
+
+#btn-add {
+    width: 176px;
+}
+
+#animation-setting {
+    height: 200px;
+    width: 220px;
+}
+
+#input-div {
+    width: 160px;
+}
+
+#source-file-label, 
+#source-file-label::after{
+    height: auto;
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+}
+
+#container {
+    max-width: 1300px;
+}
+
+#foreshadowing {
+    width: 810px;
+}
+
+#prologue {
+    position: absolute;
+    right: 30px;
+    bottom: 100px;
+    display: none;
+}
+
+#prologue span {
+    font-weight: bolder;
+}
+
+#item-text {
+    position: absolute;
+    right: 20px;
+    bottom: 100px;
+    display: none;
+}
+
+#item-text span {
+    font-weight: bolder;
+}
+
+#timeline {
+    height: 200px;
+    width: 810px;
+}
+
+#data-table-div {
+    width: 210px;
+    max-height: 800px;
+}
+
+#data-table {
+    width: 210px;
+    height: 660px;
+    overflow-y: auto;
+}
+
+
+text#title {
+    font-size: 32px;
+    font-weight: 500;
+}
+text#sub-title {
+    font-weight: 500;
+    fill: #777777;
+}
+text#caption {
+    display: none;
+    font-weight: 400;
+    font-size: 14px;
+    fill: #777777;
+}
+text.label {
+    font-weight: 600;
+}
+
+text.pre-label {
+    left: 0;
+}
+
+text.valueLabel {
+    font-weight: 300;
+}
+
+text#backgroundText {
+    font-size: 80px;
+    font-weight: 700;
+    opacity: 0.25;
+}
+.tick text {
+    fill: #777777;
+}
+.xAxis .tick:nth-child(2) text {
+    text-anchor: start;
+}
+.tick line {
+    shape-rendering: CrispEdges;
+    stroke: #ffffff;
+}
+.tick line.origin {
+    stroke: #aaaaaa;
+}
+path.domain {
+    display: none;
+}
+
+#timeline-slider {
+    font-size: 12px;
+    margin-top: 10px;
+    margin-left: 20px;
+}
+
+#play {
+    width: 40px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 6px;
+    border: solid #cccccc 0px;
+    color: #ffffff;
+    background: #cccccc;
+    padding: 4px 0;
+    text-align: center;
+    cursor: pointer;
+    outline: none;
+}
+
+#play:hover {
+    background: #dddddd;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    background-color: #eeeeee;
+    height: 6px;
+    border-radius: 15px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 18px;
+    width: 18px;
+    background: #ccc;
+    border-radius: 100%;
+}
+
+input[type="range"]::-moz-range-track {
+    height: 8px;
+    background: grey;
+    border-radius: 15px;
+    border: none;
+    float: right;
+}
+
+input[type="range"]::-moz-range-thumb {
+    height: 18px;
+    width: 18px;
+    background: #ccc;
+    border: none;
+    border-radius: 100%;
+}
+
+#slider-time {
+    margin-left: 10px;
+    width: 700px;
+}
+
+#timeline-tick {
+    margin-left: 68px;
+}
+
+#timeline-foreshadowing {
+    overflow-y: auto;
+}
+
+.foreshadowing-item {
+    display: inline-block;
+}
+
+#timeline-foreshadowing .progress {
+    background-color: #ffffff;
+}
+
+#timeline-foreshadowing .progress-bar {
+    border-radius: 0.25rem;
+}
+
+.foreshadowing-item-name {
+    float:left;
+    font-size: 14px;
+    text-align: center;
+    margin-left: 0.2rem;
+    width: 70px;
+}
+
+.foreshadowing-timing {
+    margin-top: 0.4rem;
+    margin-left: 2px;
+    float:right;
+    width: 700px;
 }

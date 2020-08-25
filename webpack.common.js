@@ -1,7 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: {
@@ -13,6 +13,9 @@ module.exports = {
     },
     plugins: [
         new webpack.ProgressPlugin(),
+        new CleanWebpackPlugin({
+            verbose: true,
+        }),
         new HtmlWebpackPlugin({
             inject: true,
             hash: true,
@@ -22,16 +25,12 @@ module.exports = {
             filename: 'index.html',
             template: path.resolve(__dirname, 'index.html'),
             minify: {
-                collapseWhitespace: true,
+                collapseWhitespace: false,
                 removeComments: true,
                 removeRedundantAttributes: true,
                 removeScriptTypeAttributes: true,
                 removeStyleLinkTypeAttributes: true,
             },
-        }),
-        new CleanWebpackPlugin({
-            verbose: true,
-            cleanOnceBeforeBuildPatterns: [path.resolve('!dist/data/')],
         }),
     ],
     module: {
