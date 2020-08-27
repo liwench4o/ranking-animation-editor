@@ -65,8 +65,8 @@ const prev = new Map(
 
 const next = new Map((nameframes as any).flatMap(([, data]: any) => d3.pairs(data)));
 
-const formatDate = d3.utcFormat('%Y');
-//const formatDate = d3.utcFormat('%e');
+const formatDate = d3.timeFormat('%Y');
+//const formatDate = d3.timeFormat('%e');
 const formatNumber = d3.format(',d');
 
 const x = d3
@@ -110,7 +110,7 @@ const captionSource = svg
     .attr('x', CONSTANT.WIDTH - 8)
     .attr('y', CONSTANT.HEIGHT + 38)
     .style('text-anchor', 'end')
-    .html('Source: Interbrand');
+    .html('Source: InterBrand');
 
 function computeKeyframes(): any[] {
     const k = parseInt(d3.select('#input-text-interpolation').property('value')); // interpolated frames, disabling interpolation by setting k to 1
@@ -157,11 +157,22 @@ function bars(svg: any): any {
                         .attr('id', (d: any) => getNameID(d.name))
                         .attr('class', 'rect')
                         .attr('fill', (d: any) => colorScale(d))
-                        .style('opacity', 0.5)
+                        .attr('fill-opacity', 0.5)
                         .attr('height', y.bandwidth())
                         .attr('x', x(0))
                         .attr('y', (d: any) => y((prev.get(d) || d).rank))
-                        .attr('width', (d: any) => x((prev.get(d) || d).value) - x(0)),
+                        .attr('width', (d: any) => x((prev.get(d) || d).value) - x(0))
+                        .style('cursor', 'pointer')
+                        .on('click', (d: any) => {
+                            const barID = getNameID(d.name);
+                            const optionID = '#option-' + barID;
+                            console.log(d3.select(optionID).attr('selected'));
+                            if (d3.select(optionID).attr('selected') !== 'selected') {
+                                d3.select(optionID).attr('selected', 'selected');
+                            } else {
+                                d3.select(optionID).attr('selected', null);
+                            }
+                        }),
                 (update: any) => update,
                 (exit: any) =>
                     exit
@@ -173,7 +184,6 @@ function bars(svg: any): any {
             .call((bar: any) =>
                 bar
                     .transition(transition)
-                    .style('opacity', 0.5)
                     .attr('y', (d: any) => y(d.rank))
                     .attr('width', (d: any) => x(d.value) - x(0)),
             ));
@@ -281,11 +291,11 @@ const halo = function (text: any, strokeWidth: number) {
     text.select(function () {
         return this.parentNode.insertBefore(this.cloneNode(true), this);
     })
-        .style('fill', '#ffffff')
-        .style('stroke', '#ffffff')
+        .style('fill', '#fff')
+        .style('stroke', '#fff')
         .style('stroke-width', strokeWidth)
         .style('stroke-linejoin', 'round')
-        .style('opacity', 1);
+        .style('opacity', 2);
 };
 
 function ticker(svg: any) {
@@ -364,14 +374,22 @@ timelineXAxisSVG.append('g').call(timelineXAxis);
 
 // Options
 const selectItem = d3.select('#select-item');
-for (const name of Array.from(names)) {
+const nameArray = Array.from(names).sort(function (a: string, b: string) {
+    if (a < b) {
+        return -1;
+    }
+    if (a > b) {
+        return 1;
+    }
+    return 0;
+});
+for (const name of nameArray) {
     selectItem
         .append('option')
         .attr('id', 'option-' + getNameID(name as string))
         .attr('value', getNameID(name as string))
         .text(name as string);
 }
-//d3.select('#option-Microsoft').attr('selected', 'selected');
 
 const selectEffect = d3.select('#select-effect');
 d3.selectAll("input[name='custom-foreshadowing-radio']").on('change', function () {
@@ -380,44 +398,119 @@ d3.selectAll("input[name='custom-foreshadowing-radio']").on('change', function (
 
     if (mode === 'explicit') {
         selectEffect.append('option').attr('value', 'none').text('None');
-        selectEffect.append('option').attr('value', 'pre-scene').text('Pre-scene');
         selectEffect.append('option').attr('value', 'prologue').text('Prologue');
+        selectEffect.append('option').attr('value', 'pre-scene').text('Pre-scene');
     } else if (mode === 'implicit') {
         selectEffect.append('option').attr('value', 'none').text('None');
-        selectEffect.append('option').attr('value', 'item-text').text('Item Text');
-        selectEffect.append('option').attr('value', 'item-appearance').text('Item Appearance');
-        selectEffect.append('option').attr('value', 'item-fliker').text('Item Fliker');
+        selectEffect.append('option').attr('value', 'contour').text('Contour');
         selectEffect.append('option').attr('value', 'de-emphasis').text('De-Emphasis');
     }
 });
 
 function updateForeshadowing(): void {
     const selectedEffect = d3.select('#select-effect').property('value');
-    // console.log('forshadowing effect', selectedEffect);
-    if (selectedEffect === 'de-emphasis') {
-        d3.selectAll('.rect').style('opacity', 0.1);
-        d3.select('#Microsoft').style('opacity', 1);
-    } else if (selectedEffect === 'item-text') {
-        d3.select('#item-text').style('display', 'inline');
-    } else if (selectedEffect === 'item-appearance') {
-        d3.select('#Microsoft').style('stroke-width', '3px').style('stroke', 'red');
-    } else if (selectedEffect === 'item-fliker') {
-        d3.select('#Microsoft').style('opacity', 0);
-    } else if (selectedEffect === 'pre-scene') {
-        d3.select('#Microsoft-clone').remove();
-        d3.select('#Microsoft')
-            .clone(true)
-            .attr('id', 'Microsoft-clone')
-            .attr('width', 415)
-            .style('opacity', 0.4)
-            .style('stroke', 'black')
-            .style('stroke-width', '3px');
-    } else if (selectedEffect === 'prologue') {
-        d3.select('#prologue').style('display', 'inline');
-    } else {
-        d3.select('#item-text').style('display', 'none');
-        d3.select('#prologue').style('display', 'none');
+    console.log('forshadowing effect', selectedEffect);
+    //const currentTimeIndex = parseInt(d3.select('#slider-time').property('value'));
+    const currentTimeIndex = parseInt(d3.select('#slider-time').property('value'));
+    console.log(currentTimeIndex);
+
+    // Prologue
+    // if (currentTimeIndex === 12) {
+    //     d3.select('#prologue').transition().duration(500).style('opacity', 1);
+    // }
+    // if (currentTimeIndex === 18) {
+    //     d3.select('#prologue').transition().duration(500).style('opacity', 0);
+    // }
+
+    // Contour
+    // if (currentTimeIndex === 13) {
+    //     d3.select('#CocaCola').attr('stroke', 'red').attr('stroke-width', 3);
+    // }
+    // if (currentTimeIndex === 18) {
+    //     d3.select('#CocaCola').attr('stroke', null).attr('stroke-width', null);
+    // }
+
+    // De-emphasis
+    if (currentTimeIndex === 13) {
+        d3.select('#bar-group').style('opacity', 0.6);
+        d3.select('#CocaCola').attr('fill-opacity', 1);
     }
+    if (currentTimeIndex === 18) {
+        d3.selectAll('#bar-group').style('opacity', 1);
+        d3.select('#CocaCola').attr('fill-opacity', 0.5);
+    }
+
+    /* 
+    //Video purpose
+    if (currentTimeIndex === 0) {
+        d3.select('#prologue').transition().duration(500).style('opacity', 1);
+        //d3.select('#Ford').transition().duration(500).style('opacity', 0.8);
+    }
+    if (currentTimeIndex === 2) {
+        d3.select('#prologue').transition().duration(500).style('opacity', 0);
+    }
+    if (currentTimeIndex === 6) {
+        d3.select('#bar-group').transition().duration(500).style('opacity', 0.6);
+    }
+    if (currentTimeIndex === 8) {
+        d3.select('#Google').attr('fill-opacity', 1);
+    }
+    if (currentTimeIndex === 10) {
+        d3.selectAll('#bar-group').style('opacity', 1);
+        d3.select('#Google').attr('fill-opacity', 0.5);
+    }
+    if (currentTimeIndex === 11) {
+        d3.select('#Apple').attr('stroke', 'red').attr('stroke-width', 3);
+    }
+    
+    if (currentTimeIndex === 15) {
+        d3.select('#Apple').attr('stroke', null).attr('stroke-width', null);
+        if (d3.select('#pre-white').empty()) {
+            d3.select('#text-group')
+                .append('rect')
+                .attr('fill', '#fff')
+                .attr('id', 'pre-white')
+                .attr('class', 'rect')
+                .style('opacity', 0.5)
+                .attr('x', 214.7865232815775)
+                .attr('y', 270)
+                .attr('height', 41)
+                .attr('width', 700);
+
+            d3.select('#text-group')
+                .append('rect')
+                .attr('fill', '#4e79a7')
+                .attr('id', 'pre-coca')
+                .attr('class', 'rect')
+                .style('opacity', 0.8)
+                .attr('x', 0)
+                .attr('y', 270)
+                .attr('height', 41)
+                .attr('width', 214.7865232815775);
+
+            d3.select('#text-group')
+                .append('text')
+                .attr('class', 'bar-label pre-label')
+                .attr('id', 'pre-label-coca')
+                .attr('transform', 'translate(0, 270)')
+                .attr('y', 20.5)
+                .attr('x', 6)
+                .attr('dy', '-0.25em')
+                .style('font-weight', 'bold')
+                .text('Pre-scene: Coca-Cola');
+        }
+    }
+    if (currentTimeIndex === 18) {
+        d3.select('#pre-white').transition().delay(2000).duration(500).style('opacity', 0).remove();
+        d3.select('#pre-coca').transition().delay(1000).duration(500).style('opacity', 0).remove();
+        d3.select('#pre-label-coca')
+            .transition()
+            .delay(1000)
+            .duration(500)
+            .style('opacity', 0)
+            .remove();
+    }
+    */
 }
 
 function updateTitle(): void {
@@ -467,6 +560,41 @@ d3.select('#input-text-subtitle').on('input', function () {
     updateSubTitle();
 });
 
+d3.select('#btn-add').on('click', () => {
+    d3.select('#input-prologue').property('value', '');
+
+    const options = d3.selectAll('#select-item option');
+    for (const option of options.nodes()) {
+        d3.select(option).attr('selected', null);
+    }
+
+    if (!d3.select('#ford-white').empty()) {
+        d3.select('#ford-white').transition().duration(500).style('opacity', 0).remove();
+    } else if (!d3.select('#google-white').empty()) {
+        d3.select('#google-white').transition().duration(500).style('opacity', 0).remove();
+    } else if (!d3.select('#apple-white').empty()) {
+        d3.select('#apple-white').transition().duration(500).style('opacity', 0).remove();
+    } else if (!d3.select('#coca-white').empty()) {
+        d3.select('#coca-white').transition().duration(500).style('opacity', 0).remove();
+    }
+});
+
+d3.select('#ford-label').on('click', () => {
+    d3.select('#ford-foreshadowing').transition().duration(500).style('opacity', 0).remove();
+});
+
+d3.select('#google-label').on('click', () => {
+    d3.select('#google-foreshadowing').transition().duration(500).style('opacity', 0).remove();
+});
+
+d3.select('#apple-label').on('click', () => {
+    d3.select('#apple-foreshadowing').transition().duration(500).style('opacity', 0).remove();
+});
+
+d3.select('#coca-label').on('click', () => {
+    d3.select('#coca-foreshadowing').transition().duration(500).style('opacity', 0).remove();
+});
+
 let playAnimation = false;
 d3.select('#play').on('click', function () {
     if (playAnimation) {
@@ -484,7 +612,8 @@ d3.select('#slider-time').on('input', function () {
     playAnimation = false;
     d3.select('#play').property('value', '▶');
     timeIndex = parseInt(d3.select(this).property('value'));
-    keyframeIndex = timeIndex * 5;
+    const k = parseInt(d3.select('#input-text-interpolation').property('value')); // 5
+    keyframeIndex = timeIndex * k;
     const keyframe = keyframes[keyframeIndex]; // TODO
     // Extract the top bar’s value.
     x.domain([0, keyframe[1][0].value]);
