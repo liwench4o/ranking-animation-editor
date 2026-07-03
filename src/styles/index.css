@@ -1,0 +1,290 @@
+@import "tailwindcss";
+
+:root {
+  color: #18202f;
+  background: #f4f7fb;
+  font-family: "Aptos", "SF Pro Text", "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  min-width: 360px;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea {
+  letter-spacing: 0;
+}
+
+.app-root {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(244, 247, 251, 0.95) 38%),
+    #f4f7fb;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid #dfe7f2;
+  background: #ffffff;
+}
+
+.app-header h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 24px;
+  font-weight: 720;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.app-kicker {
+  margin: 0 0 3px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.header-meta {
+  display: flex;
+  gap: 8px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.header-meta span,
+.preview-status {
+  border: 1px solid #d7e1ed;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: #f8fafc;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(240px, 280px) minmax(620px, 1fr) minmax(260px, 360px);
+  gap: 16px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.control-column,
+.data-column {
+  min-width: 0;
+}
+
+.preview-column {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.panel-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.tool-panel,
+.preview-panel,
+.timeline-panel,
+.data-panel {
+  border: 1px solid #dce5ef;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(24, 32, 47, 0.06);
+}
+
+.tool-panel,
+.timeline-panel,
+.data-panel {
+  padding: 14px;
+}
+
+.preview-panel {
+  padding: 12px 14px 6px;
+}
+
+.panel-title {
+  margin: 0 0 12px;
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 760;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.panel-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-heading-row .panel-title {
+  margin-bottom: 0;
+}
+
+.effect-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.chart-shell {
+  position: relative;
+  min-height: 462px;
+  overflow: hidden;
+}
+
+.chart-shell svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ranking-chart .chart-title {
+  fill: #111827;
+  font-size: 30px;
+  font-weight: 720;
+  letter-spacing: 0;
+}
+
+.ranking-chart .chart-subtitle {
+  fill: #64748b;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.ranking-chart .chart-source {
+  fill: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ranking-chart .year-ticker {
+  fill: #334155;
+  font-size: 78px;
+  font-weight: 780;
+  opacity: 0.18;
+}
+
+.ranking-chart .foreshadow-caption {
+  fill: #0f766e;
+  font-size: 15px;
+  font-weight: 720;
+}
+
+.ranking-chart .bar-label {
+  fill: #111827;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-anchor: end;
+}
+
+.ranking-chart .bar-value {
+  fill: #64748b;
+}
+
+.ranking-chart .axis-group .tick text {
+  fill: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ranking-chart .axis-group .tick line {
+  stroke: #eef2f7;
+}
+
+.timeline-controls {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.timeline-slider {
+  margin: 0;
+}
+
+.timeline-items {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: 28px 82px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.timeline-brand {
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-progress {
+  min-width: 0;
+}
+
+.ant-form-item {
+  margin-bottom: 12px;
+}
+
+.ant-table {
+  font-size: 12px;
+}
+
+.ant-table-cell {
+  white-space: nowrap;
+}
+
+@media (max-width: 1180px) {
+  .app-shell {
+    grid-template-columns: minmax(230px, 280px) minmax(580px, 1fr);
+  }
+
+  .data-column {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 860px) {
+  .app-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .app-shell {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+  }
+
+  .chart-shell {
+    min-height: 330px;
+  }
+
+  .timeline-row {
+    grid-template-columns: 28px 74px minmax(0, 1fr);
+  }
+}
