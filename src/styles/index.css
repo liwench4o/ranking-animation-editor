@@ -31,8 +31,8 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 18px 24px 14px;
+  gap: 16px;
+  padding: 10px 18px 9px;
   border-bottom: 1px solid #dfe7f2;
   background: #ffffff;
 }
@@ -40,16 +40,16 @@ textarea {
 .app-header h1 {
   margin: 0;
   color: #111827;
-  font-size: 24px;
+  font-size: 21px;
   font-weight: 720;
-  line-height: 1.15;
+  line-height: 1.1;
   letter-spacing: 0;
 }
 
 .app-kicker {
-  margin: 0 0 3px;
+  margin: 0 0 2px;
   color: #64748b;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1.2;
   text-transform: uppercase;
@@ -57,44 +57,81 @@ textarea {
 
 .header-meta {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
   color: #475569;
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
 }
 
-.header-meta span,
-.preview-status {
+.header-count {
   border: 1px solid #d7e1ed;
-  border-radius: 999px;
-  padding: 4px 9px;
+  border-radius: 6px;
+  padding: 3px 8px;
   background: #f8fafc;
+}
+
+.header-dataset {
+  flex: 0 0 242px;
+  width: 242px;
+}
+
+.header-dataset .ant-select-selector {
+  font-weight: 650;
+}
+
+.header-dataset .ant-select-selection-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-upload {
+  margin-left: 0;
 }
 
 .app-shell {
   display: grid;
-  grid-template-columns: minmax(240px, 280px) minmax(620px, 1fr) minmax(260px, 360px);
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+  align-items: stretch;
   gap: 16px;
   max-width: 1480px;
   margin: 0 auto;
   padding: 16px;
 }
 
-.control-column,
-.data-column {
+.control-column {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  align-self: stretch;
   min-width: 0;
+}
+
+/* The data panel lives outside the sidebar/preview grid so the sticky sidebar
+   is constrained to that grid and can never slide over the table. */
+.data-shell {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 0 16px 16px;
 }
 
 .preview-column {
   display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 16px;
+  height: 100%;
   min-width: 0;
 }
 
 .panel-stack {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
+  width: 100%;
+  height: 100%;
 }
 
 .tool-panel,
@@ -102,19 +139,22 @@ textarea {
 .timeline-panel,
 .data-panel {
   border: 1px solid #dce5ef;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #ffffff;
-  box-shadow: 0 6px 18px rgba(24, 32, 47, 0.06);
+  box-shadow: 0 1px 3px rgba(24, 32, 47, 0.07);
 }
 
 .tool-panel,
-.timeline-panel,
-.data-panel {
-  padding: 14px;
+.timeline-panel {
+  padding: 16px;
 }
 
 .preview-panel {
-  padding: 12px 14px 6px;
+  padding: 14px 16px 8px;
+}
+
+.preview-panel .panel-title {
+  margin-bottom: 8px;
 }
 
 .panel-title {
@@ -126,27 +166,98 @@ textarea {
   letter-spacing: 0;
 }
 
-.panel-heading-row {
+.export-panel {
+  margin-top: auto;
+}
+
+.export-controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.panel-heading-row .panel-title {
-  margin-bottom: 0;
-}
-
-.effect-chip-row {
-  display: flex;
   flex-wrap: wrap;
+  gap: 6px;
+}
+
+.export-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  flex: 1 1 100%;
+}
+
+.export-kind {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.export-progress {
+  width: 140px;
+  margin: 0;
+}
+
+.export-error {
+  max-width: 260px;
+  overflow: hidden;
+  color: #d64545;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.effect-hint {
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.compact-settings-form {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 30px;
+}
+
+.settings-label {
+  display: flex;
+  align-items: center;
   gap: 4px;
-  margin-top: 8px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.settings-help-icon {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.settings-control {
+  min-width: 0;
+}
+
+.compact-settings-form .ant-input,
+.compact-settings-form .ant-input-number {
+  width: 100%;
+}
+
+.compact-settings-form .ant-slider {
+  margin: 6px 4px 16px;
 }
 
 .chart-shell {
   position: relative;
+  max-width: 960px;
   min-height: 462px;
+  margin: 0 auto;
   overflow: hidden;
 }
 
@@ -182,10 +293,22 @@ textarea {
   opacity: 0.18;
 }
 
-.ranking-chart .foreshadow-caption {
+.ranking-chart .banner-box {
   fill: #0f766e;
+  opacity: 0.92;
+}
+
+.ranking-chart .banner-text {
+  fill: #ffffff;
   font-size: 15px;
   font-weight: 720;
+}
+
+.ranking-chart .ghost-label {
+  fill: #64748b;
+  font-size: 11px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
 }
 
 .ranking-chart .bar-label {
@@ -211,14 +334,32 @@ textarea {
 
 .timeline-controls {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
   align-items: center;
-  margin-top: 14px;
+  margin-top: 0;
+}
+
+.transport-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.timeline-slider-block {
+  min-width: 0;
 }
 
 .timeline-slider {
   margin: 0;
+}
+
+.timeline-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .timeline-items {
@@ -243,8 +384,130 @@ textarea {
   white-space: nowrap;
 }
 
-.timeline-progress {
+.timeline-track {
+  position: relative;
   min-width: 0;
+  height: 16px;
+  border-radius: 999px;
+  background: #eef2f7;
+  overflow: hidden;
+}
+
+.timeline-band {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 0 8px;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.timeline-band.explicit {
+  background: #1677ff;
+}
+
+.timeline-band.implicit {
+  background: #0f766e;
+}
+
+.timeline-empty {
+  margin: 12px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.add-button-tooltip {
+  display: block;
+}
+
+.range-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+
+.range-heading-label {
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.range-caption {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.range-form-item .ant-slider {
+  margin: 5px 4px 8px;
+}
+
+.data-panel {
+  padding: 4px 6px;
+}
+
+.data-panel .ant-collapse-header {
+  align-items: center;
+}
+
+.data-panel .ant-collapse-content-box {
+  padding-top: 0;
+}
+
+.data-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.data-summary .panel-title {
+  margin-bottom: 0;
+}
+
+.data-summary-meta {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-upload-error {
+  margin-bottom: 10px;
+}
+
+.cell-edit-button {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cell-edit-button:hover {
+  color: #1677ff;
 }
 
 .ant-form-item {
@@ -259,13 +522,20 @@ textarea {
   white-space: nowrap;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1024px) {
   .app-shell {
-    grid-template-columns: minmax(230px, 280px) minmax(580px, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .data-column {
-    grid-column: 1 / -1;
+  .control-column {
+    position: static;
+    display: block;
+  }
+
+  .panel-stack,
+  .preview-column {
+    grid-template-rows: none;
+    height: auto;
   }
 }
 
@@ -275,9 +545,21 @@ textarea {
     flex-direction: column;
   }
 
+  .header-meta {
+    width: 100%;
+  }
+
+  .header-dataset {
+    flex: 1 1 220px;
+    width: 220px;
+  }
+
   .app-shell {
-    grid-template-columns: minmax(0, 1fr);
     padding: 12px;
+  }
+
+  .data-shell {
+    padding: 0 12px 12px;
   }
 
   .chart-shell {

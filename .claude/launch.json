@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "foreshadowing-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "port": 3002
+    },
+    {
+      "name": "foreshadowing-dev-alt",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start", "--", "--port", "3003", "--no-open", "--allowed-hosts", "all"],
+      "port": 3003
+    }
+  ]
+}
