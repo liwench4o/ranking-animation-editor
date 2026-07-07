@@ -1,9 +1,27 @@
-import { advanceExportMotionState, planFrames, smoothTowards, type ExportMotionState } from './exportAnimation';
+import {
+  MP4_SCALE,
+  advanceExportMotionState,
+  planFrames,
+  smoothTowards,
+  type ExportMotionState,
+} from './exportAnimation';
 import { renderChartFrame, type FrameScene } from './renderFrame';
-import { TOP_N } from '../chart/constants';
+import { FRAME_HEIGHT, FRAME_PADDING, FRAME_WIDTH, HEIGHT, TOP_N, WIDTH } from '../chart/constants';
 import { createBandGeometry } from '../chart/style';
 import { BANNER_PADDING_X, BANNER_TEXT_MAX_WIDTH } from '../chart/textLayout';
 import type { RankDatum, ResolvedEffects } from '../types';
+
+describe('export frame dimensions', () => {
+  it('wraps the chart in a uniform padding gutter', () => {
+    expect(FRAME_WIDTH).toBe(WIDTH + FRAME_PADDING * 2);
+    expect(FRAME_HEIGHT).toBe(HEIGHT + FRAME_PADDING * 2);
+  });
+
+  it('keeps the scaled MP4 dimensions even for H.264', () => {
+    expect((FRAME_WIDTH * MP4_SCALE) % 2).toBe(0);
+    expect((FRAME_HEIGHT * MP4_SCALE) % 2).toBe(0);
+  });
+});
 
 describe('planFrames', () => {
   it('derives frames per period from fps and period duration', () => {
@@ -127,6 +145,26 @@ describe('renderChartFrame', () => {
     expect(drawnText).toContain('Item 0');
     expect(drawnText).toContain('Title');
     expect(drawnText).toContain('2000');
+  });
+
+  it('draws bar names and values inside the bar height', () => {
+    const { ctx, calls, sequence } = makeStubContext();
+    const geometry = createBandGeometry();
+
+    renderChartFrame(ctx, makeScene());
+
+    const itemNameCall = calls.fillText?.find((args) => args[0] === 'Item 0');
+    const itemNameIndex = sequence.findIndex((entry) => entry.name === 'fillText' && entry.args[0] === 'Item 0');
+    const itemValueCall = sequence
+      .slice(itemNameIndex + 1)
+      .find((entry) => entry.name === 'fillText' && entry.args[0] === '100')?.args;
+    const barTop = geometry.yOf(0);
+    const barBottom = barTop + geometry.bandwidth;
+
+    expect(Number(itemNameCall?.[2])).toBeGreaterThan(barTop);
+    expect(Number(itemNameCall?.[2])).toBeLessThan(barBottom);
+    expect(Number(itemValueCall?.[2])).toBeGreaterThan(barTop);
+    expect(Number(itemValueCall?.[2])).toBeLessThan(barBottom);
   });
 
   it('draws ghost bars and prologue banners when effects are active', () => {

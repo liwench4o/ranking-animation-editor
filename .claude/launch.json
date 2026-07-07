@@ -5,13 +5,20 @@
       "name": "foreshadowing-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["start"],
-      "port": 3002
+      "port": 3002,
+      "autoPort": true
     },
     {
       "name": "foreshadowing-dev-alt",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["start", "--", "--port", "3003", "--no-open", "--allowed-hosts", "all"],
       "port": 3003
+    },
+    {
+      "name": "foreshadowing-dev-alt2",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start", "--", "--port", "3004", "--no-open", "--allowed-hosts", "all"],
+      "port": 3004
     }
   ]
 }

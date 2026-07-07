@@ -1,9 +1,9 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   color: #18202f;
   background: #f4f7fb;
-  font-family: "Aptos", "SF Pro Text", "Segoe UI", sans-serif;
+  font-family: 'Aptos', 'SF Pro Text', 'Segoe UI', sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -23,7 +23,11 @@ textarea {
 .app-root {
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(244, 247, 251, 0.95) 38%),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(244, 247, 251, 0.95) 38%
+    ),
     #f4f7fb;
 }
 
@@ -106,7 +110,7 @@ textarea {
   position: sticky;
   top: 16px;
   display: flex;
-  align-self: stretch;
+  align-self: start;
   min-width: 0;
 }
 
@@ -121,6 +125,7 @@ textarea {
 .preview-column {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
+  align-self: stretch;
   gap: 16px;
   height: 100%;
   min-width: 0;
@@ -131,7 +136,7 @@ textarea {
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  height: 100%;
+  height: auto;
 }
 
 .tool-panel,
@@ -150,11 +155,38 @@ textarea {
 }
 
 .preview-panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: var(--balanced-preview-height, auto);
+  min-height: 0;
   padding: 14px 16px 8px;
 }
 
-.preview-panel .panel-title {
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 8px;
+}
+
+.preview-header .panel-title {
+  margin-bottom: 0;
+}
+
+/* Dark preview: only the preview panel + its chart switch; the rest of the
+   editor chrome stays light. Chart SVG colors below must match DARK_THEME in
+   src/chart/theme.ts (the live path is styled here, the export path reads the
+   theme object). */
+.preview-panel.is-dark {
+  border-color: #1f2933;
+  background: #0b0e14;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.preview-panel.is-dark .panel-title {
+  color: #e2e8f0;
 }
 
 .panel-title {
@@ -164,10 +196,6 @@ textarea {
   font-weight: 760;
   line-height: 1.2;
   letter-spacing: 0;
-}
-
-.export-panel {
-  margin-top: auto;
 }
 
 .export-controls {
@@ -230,7 +258,7 @@ textarea {
   gap: 4px;
   color: #334155;
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.2;
   text-align: left;
 }
@@ -253,10 +281,46 @@ textarea {
   margin: 6px 4px 16px;
 }
 
+.color-map-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.color-map-swatch-list {
+  display: inline-flex;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid #d7e1ed;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.color-map-swatch {
+  width: 12px;
+  height: 14px;
+}
+
+.color-map-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .chart-shell {
   position: relative;
-  max-width: 960px;
-  min-height: 462px;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 1080px;
+  min-height: 360px;
   margin: 0 auto;
   overflow: hidden;
 }
@@ -264,7 +328,12 @@ textarea {
 .chart-shell svg {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  min-height: 0;
+}
+
+.ranking-chart .chart-background {
+  fill: #ffffff;
 }
 
 .ranking-chart .chart-title {
@@ -294,7 +363,7 @@ textarea {
 }
 
 .ranking-chart .banner-box {
-  fill: #0f766e;
+  fill: #1677ff;
   opacity: 0.92;
 }
 
@@ -312,14 +381,17 @@ textarea {
 }
 
 .ranking-chart .bar-label {
-  fill: #111827;
+  fill: #ffffff;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  paint-order: stroke fill;
+  stroke: rgba(15, 23, 42, 0.22);
+  stroke-width: 2px;
   text-anchor: end;
 }
 
 .ranking-chart .bar-value {
-  fill: #64748b;
+  fill: rgba(255, 255, 255, 0.84);
 }
 
 .ranking-chart .axis-group .tick text {
@@ -332,11 +404,47 @@ textarea {
   stroke: #eef2f7;
 }
 
+.chart-shell[data-theme='dark'] {
+  background: #0b0e14;
+}
+
+.chart-shell[data-theme='dark'] .chart-background {
+  fill: #0b0e14;
+}
+
+.chart-shell[data-theme='dark'] .chart-title {
+  fill: #f8fafc;
+}
+
+.chart-shell[data-theme='dark'] .chart-subtitle {
+  fill: #cbd5e1;
+}
+
+.chart-shell[data-theme='dark'] .chart-source {
+  fill: #94a3b8;
+}
+
+.chart-shell[data-theme='dark'] .year-ticker {
+  fill: #e2e8f0;
+}
+
+.chart-shell[data-theme='dark'] .ghost-label {
+  fill: #94a3b8;
+}
+
+.chart-shell[data-theme='dark'] .axis-group .tick text {
+  fill: #94a3b8;
+}
+
+.chart-shell[data-theme='dark'] .axis-group .tick line {
+  stroke: #1f2933;
+}
+
 .timeline-controls {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 16px;
-  align-items: center;
+  align-items: start;
   margin-top: 0;
 }
 
@@ -346,26 +454,80 @@ textarea {
 }
 
 .timeline-slider-block {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.timeline-playbar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 32px;
   min-width: 0;
 }
 
 .timeline-slider {
+  flex: 1;
   margin: 0;
 }
 
+.timeline-slider.ant-slider-horizontal {
+  padding-block: 4px;
+}
+
+.timeline-slider .ant-slider-rail,
+.timeline-slider .ant-slider-track,
+.timeline-slider .ant-slider-step {
+  height: 4px;
+  border-radius: 999px;
+}
+
+.timeline-slider .ant-slider-rail {
+  background: #e8eef6;
+}
+
+.timeline-slider .ant-slider-track {
+  background: #1677ff;
+}
+
+.timeline-slider .ant-slider-handle {
+  inset-block-start: calc(50% - 5px);
+}
+
+.timeline-slider .ant-slider-handle::after {
+  box-shadow: 0 0 0 2px #1677ff;
+}
+
 .timeline-scale {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2px;
+  position: relative;
+  height: 12px;
   color: #94a3b8;
   font-size: 11px;
   font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.timeline-scale span {
+  position: absolute;
+  top: 0;
+  transform: translateY(-50%);
+}
+
+.timeline-scale span:first-child {
+  left: 0;
+  transform: translate(-50%, 0);
+}
+
+.timeline-scale span:last-child {
+  left: 100%;
+  transform: translate(-50%, 0);
 }
 
 .timeline-items {
   display: grid;
   gap: 8px;
-  margin-top: 12px;
   max-height: 150px;
   overflow-y: auto;
 }
@@ -415,7 +577,7 @@ textarea {
 }
 
 .timeline-band.implicit {
-  background: #0f766e;
+  background: #64748b;
 }
 
 .timeline-empty {
@@ -437,10 +599,22 @@ textarea {
 }
 
 .range-heading-label {
-  color: #1f2937;
+  color: #334155;
   font-size: 12px;
-  font-weight: 650;
-  line-height: 1.3;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.tool-panel .ant-form-vertical .ant-form-item-label {
+  padding-bottom: 2px;
+}
+
+.tool-panel .ant-form-item-label > label {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  height: auto;
 }
 
 .range-caption {
@@ -535,6 +709,14 @@ textarea {
   .panel-stack,
   .preview-column {
     grid-template-rows: none;
+    height: auto;
+  }
+
+  .preview-panel {
+    height: auto;
+  }
+
+  .chart-shell svg {
     height: auto;
   }
 }

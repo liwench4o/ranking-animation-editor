@@ -1,14 +1,31 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, ConfigProvider, Select, Upload } from 'antd';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
+import { Button, ConfigProvider, Segmented, Select, Upload } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { ChartCanvas } from './ChartCanvas';
 import { ControlPanel } from './ControlPanel';
 import { DataTablePanel } from './DataTablePanel';
 import { ExportControls } from './ExportControls';
 import { TimelinePanel } from './TimelinePanel';
+import { computeBalancedPreviewHeight } from './previewLayout';
 import { DEFAULT_INTERPOLATION, DEFAULT_PERIOD_DURATION } from '../chart/constants';
-import { createColorScale } from '../chart/color';
-import { computeKeyframes, updateDatasetMeta } from '../data/dataset';
+import {
+  COLOR_MAP_OPTIONS,
+  DEFAULT_COLOR_MAP,
+  createColorScale,
+  swatchColorsFor,
+  visibleColorKeys,
+  type ColorMapName,
+} from '../chart/color';
+import { DEFAULT_CHART_THEME, getChartTheme, type ChartThemeName } from '../chart/theme';
+import { computeKeyframes } from '../data/dataset';
 import { parseDatasetFile } from '../data/parseTimeSeries';
 import { getEffectOptions } from '../foreshadowing/options';
 import { resolveEffects } from '../foreshadowing/resolve';
@@ -31,6 +48,7 @@ export interface DatasetPreset {
 }
 
 const DEFAULT_DATASET_KEY = 'default-dataset';
+const DESKTOP_LAYOUT_QUERY = '(min-width: 1025px)';
 
 export function App({ initialDataset, datasetPresets = [] }: AppProps) {
   const availableDatasetPresets = useMemo<DatasetPreset[]>(() => {
@@ -56,6 +74,8 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
   const [caption, setCaption] = useState('');
   const [interpolation, setInterpolation] = useState(DEFAULT_INTERPOLATION);
   const [periodDuration, setPeriodDuration] = useState(DEFAULT_PERIOD_DURATION);
+  const [colorMap, setColorMap] = useState<ColorMapName>(DEFAULT_COLOR_MAP);
+  const [chartThemeName, setChartThemeName] = useState<ChartThemeName>(DEFAULT_CHART_THEME);
   const [mode, setMode] = useState<ForeshadowingMode>('explicit');
   const [effect, setEffect] = useState<ForeshadowingEffect>('prologue');
   const [selectedNames, setSelectedNames] = useState<string[]>([]);
@@ -66,15 +86,29 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
   const [foreshadowingSpecs, setForeshadowingSpecs] = useState<ForeshadowingSpec[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dataPanelOpen, setDataPanelOpen] = useState(false);
+  const [balancedPreviewHeight, setBalancedPreviewHeight] = useState<number | null>(null);
+  const panelStackRef = useRef<HTMLDivElement>(null);
+  const previewColumnRef = useRef<HTMLElement>(null);
+  const timelinePanelRef = useRef<HTMLElement>(null);
 
   const periodLabels = useMemo(() => dataset.periods.map((period) => period.label), [dataset]);
   // Keyed on the dataset id: value edits keep the same color assignments.
-  const colorScale = useMemo(() => createColorScale(dataset), [dataset.id]);
+  const colorScale = useMemo(() => createColorScale(dataset, colorMap), [colorMap, dataset.id]);
+  const chartTheme = useMemo(() => getChartTheme(chartThemeName), [chartThemeName]);
   const keyframes = useMemo(() => computeKeyframes(dataset, interpolation), [dataset, interpolation]);
   const maxFrameIndex = Math.max(0, keyframes.length - 1);
   const maxPeriodIndex = Math.max(0, dataset.periods.length - 1);
   const clampedFrameIndex = Math.min(frameIndex, maxFrameIndex);
   const currentKeyframe = keyframes[clampedFrameIndex];
+  // Preview each palette with the colors it assigns to the bars on screen, so
+  // the dropdown swatches track the canvas instead of the palette's raw order.
+  const colorMapSwatches = useMemo(() => {
+    const keys = visibleColorKeys(currentKeyframe?.data);
+
+    return Object.fromEntries(
+      COLOR_MAP_OPTIONS.map((option) => [option.value, swatchColorsFor(dataset, option.value, keys)]),
+    ) as Record<ColorMapName, string[]>;
+  }, [currentKeyframe, dataset]);
   const frameTime = clampedFrameIndex / interpolation;
   const frameDuration = Math.max(16, periodDuration / interpolation);
   const currentPeriodIndex = Math.min(maxPeriodIndex, Math.floor(frameTime));
@@ -156,6 +190,62 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
     }
   }, [frameIndex, maxFrameIndex, playing]);
 
+  useLayoutEffect(() => {
+    const panelStack = panelStackRef.current;
+    const previewColumn = previewColumnRef.current;
+    const timelinePanel = timelinePanelRef.current;
+
+    if (!panelStack || !previewColumn || !timelinePanel) {
+      return undefined;
+    }
+
+    let frameId = 0;
+    const mediaQuery = window.matchMedia(DESKTOP_LAYOUT_QUERY);
+
+    const readGap = () => {
+      const styles = window.getComputedStyle(previewColumn);
+      const rawGap = styles.rowGap === 'normal' ? styles.gap : styles.rowGap;
+      const parsed = Number.parseFloat(rawGap);
+
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    const scheduleUpdate = () => {
+      window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        if (!mediaQuery.matches) {
+          setBalancedPreviewHeight(null);
+          return;
+        }
+
+        const nextHeight = computeBalancedPreviewHeight({
+          gap: readGap(),
+          leftColumnHeight: panelStack.getBoundingClientRect().height,
+          timelineHeight: timelinePanel.getBoundingClientRect().height,
+        });
+
+        setBalancedPreviewHeight((currentHeight) =>
+          currentHeight !== null && Math.abs(currentHeight - nextHeight) < 0.5 ? currentHeight : nextHeight,
+        );
+      });
+    };
+
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(scheduleUpdate);
+    resizeObserver?.observe(panelStack);
+    resizeObserver?.observe(timelinePanel);
+
+    window.addEventListener('resize', scheduleUpdate);
+    mediaQuery.addEventListener('change', scheduleUpdate);
+    scheduleUpdate();
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', scheduleUpdate);
+      mediaQuery.removeEventListener('change', scheduleUpdate);
+    };
+  }, []);
+
   const handleModeChange = useCallback((value: ForeshadowingMode) => {
     setMode(value);
     setEffect(getEffectOptions(value)[0].value);
@@ -183,10 +273,6 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
   const handleRestart = useCallback(() => {
     setPlaying(false);
     setFrameIndex(0);
-  }, []);
-
-  const handleSourceChange = useCallback((value: string) => {
-    setDataset((current) => updateDatasetMeta(current, { source: value || undefined }));
   }, []);
 
   const handleRangeChange = useCallback((start: number, end: number) => {
@@ -285,6 +371,15 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
     },
     [handleDatasetChange],
   );
+  const previewPanelStyle = useMemo(
+    () =>
+      balancedPreviewHeight === null
+        ? undefined
+        : ({
+            '--balanced-preview-height': `${balancedPreviewHeight}px`,
+          } as CSSProperties),
+    [balancedPreviewHeight],
+  );
 
   return (
     <ConfigProvider
@@ -292,7 +387,6 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
         token: {
           borderRadius: 8,
           colorPrimary: '#1677ff',
-          colorSuccess: '#0f766e',
           fontFamily: '"Aptos", "SF Pro Text", "Segoe UI", sans-serif',
         },
       }}
@@ -335,11 +429,13 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
         <main className="app-main">
           <div className="app-shell">
             <aside className="control-column">
-              <div className="panel-stack">
+              <div ref={panelStackRef} className="panel-stack">
                 <ControlPanel
                   addHint={addHint}
                   brandOptions={dataset.entities}
                   caption={caption}
+                  colorMap={colorMap}
+                  colorMapSwatches={colorMapSwatches}
                   effect={effect}
                   interpolation={interpolation}
                   maxRangeIndex={maxPeriodIndex}
@@ -349,18 +445,17 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
                   rangeEnd={rangeEnd}
                   rangeStart={rangeStart}
                   selectedNames={selectedNames}
-                  source={dataset.meta.source ?? ''}
                   subtitle={subtitle}
                   title={title}
                   onAdd={handleAdd}
                   onCaptionChange={setCaption}
+                  onColorMapChange={setColorMap}
                   onEffectChange={setEffect}
                   onInterpolationChange={handleInterpolationChange}
                   onModeChange={handleModeChange}
                   onPeriodDurationChange={handlePeriodDurationChange}
                   onRangeChange={handleRangeChange}
                   onSelectedNamesChange={setSelectedNames}
-                  onSourceChange={handleSourceChange}
                   onSubtitleChange={setSubtitle}
                   onTitleChange={setTitle}
                 />
@@ -374,15 +469,31 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
                     source={dataset.meta.source}
                     specs={foreshadowingSpecs}
                     subtitle={subtitle}
+                    theme={chartTheme}
                     title={title}
                   />
                 </section>
               </div>
             </aside>
 
-            <section className="preview-column">
-              <section className="preview-panel">
-                <h2 className="panel-title">Preview</h2>
+            <section ref={previewColumnRef} className="preview-column">
+              <section
+                className={`preview-panel${chartThemeName === 'dark' ? ' is-dark' : ''}`}
+                style={previewPanelStyle}
+              >
+                <div className="preview-header">
+                  <h2 className="panel-title">Preview</h2>
+                  <Segmented
+                    aria-label="Preview theme"
+                    size="small"
+                    value={chartThemeName}
+                    options={[
+                      { label: 'Light', value: 'light' },
+                      { label: 'Dark', value: 'dark' },
+                    ]}
+                    onChange={(value) => setChartThemeName(value as ChartThemeName)}
+                  />
+                </div>
                 <ChartCanvas
                   colorScale={colorScale}
                   currentKeyframe={currentKeyframe}
@@ -391,12 +502,14 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
                   selectedNames={selectedNames}
                   source={dataset.meta.source}
                   subtitle={subtitle}
+                  theme={chartTheme}
                   title={title}
                   onSelectName={handleSelectName}
                 />
               </section>
 
               <TimelinePanel
+                ref={timelinePanelRef}
                 currentPeriodIndex={currentPeriodIndex}
                 items={foreshadowingSpecs}
                 maxPeriodIndex={maxPeriodIndex}

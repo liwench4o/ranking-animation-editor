@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { Button, Slider, Tag } from 'antd';
 import {
   CaretRightOutlined,
@@ -20,7 +21,7 @@ interface TimelinePanelProps {
   onTogglePlaying: () => void;
 }
 
-export function TimelinePanel({
+export const TimelinePanel = forwardRef<HTMLElement, TimelinePanelProps>(function TimelinePanel({
   currentPeriodIndex,
   items,
   maxPeriodIndex,
@@ -31,12 +32,12 @@ export function TimelinePanel({
   onRemoveItem,
   onRestart,
   onTogglePlaying,
-}: TimelinePanelProps) {
+}, ref) {
   const safeMax = Math.max(0, maxPeriodIndex);
   const formatPeriod = (index: number) => periodLabels[index] ?? String(index);
 
   return (
-    <section className="timeline-panel">
+    <section ref={ref} className="timeline-panel">
       <h2 className="panel-title">Timeline</h2>
       <div className="timeline-controls">
         <div className="transport-buttons">
@@ -55,16 +56,18 @@ export function TimelinePanel({
           />
         </div>
         <div className="timeline-slider-block">
-          <Slider
-            ariaLabelForHandle="Timeline period"
-            className="timeline-slider"
-            max={safeMax}
-            min={0}
-            step={1}
-            tooltip={{ formatter: (value) => formatPeriod(value ?? 0) }}
-            value={Math.min(currentPeriodIndex, safeMax)}
-            onChange={(value) => onPeriodIndexChange(Number(value))}
-          />
+          <div className="timeline-playbar">
+            <Slider
+              ariaLabelForHandle="Timeline period"
+              className="timeline-slider"
+              max={safeMax}
+              min={0}
+              step={1}
+              tooltip={{ formatter: (value) => formatPeriod(value ?? 0) }}
+              value={Math.min(currentPeriodIndex, safeMax)}
+              onChange={(value) => onPeriodIndexChange(Number(value))}
+            />
+          </div>
           <div aria-hidden="true" className="timeline-scale">
             <span>{formatPeriod(0)}</span>
             <span>{formatPeriod(safeMax)}</span>
@@ -111,7 +114,7 @@ export function TimelinePanel({
       </div>
     </section>
   );
-}
+});
 
 function formatEffect(effect: ForeshadowingSpec['effect']): string {
   if (effect === 'de-emphasis') {

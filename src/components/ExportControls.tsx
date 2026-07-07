@@ -3,6 +3,7 @@ import { Button, Progress } from 'antd';
 import { CloseOutlined, FileImageOutlined, VideoCameraOutlined } from '@ant-design/icons';
 import { downloadBlob, exportGif, exportMp4 } from '../export/exportAnimation';
 import type { ColorScale } from '../chart/color';
+import type { ChartTheme } from '../chart/theme';
 import type { Dataset, ForeshadowingSpec } from '../types';
 
 interface ExportControlsProps {
@@ -13,6 +14,7 @@ interface ExportControlsProps {
   source?: string;
   specs: ForeshadowingSpec[];
   subtitle: string;
+  theme: ChartTheme;
   title: string;
 }
 
@@ -26,6 +28,7 @@ export function ExportControls({
   source,
   specs,
   subtitle,
+  theme,
   title,
 }: ExportControlsProps) {
   const [running, setRunning] = useState<{ kind: ExportKind; percent: number } | null>(null);
@@ -46,6 +49,7 @@ export function ExportControls({
         subtitle,
         source,
         color,
+        theme,
         periodDurationMs,
         rankTransitionMs,
         signal: controller.signal,
@@ -88,10 +92,10 @@ export function ExportControls({
         </span>
       ) : null}
       <div className="export-buttons">
-        <Button block icon={<FileImageOutlined />} onClick={() => runExport('gif')}>
+        <Button block size="small" icon={<FileImageOutlined />} onClick={() => runExport('gif')}>
           GIF
         </Button>
-        <Button block icon={<VideoCameraOutlined />} onClick={() => runExport('mp4')}>
+        <Button block size="small" icon={<VideoCameraOutlined />} onClick={() => runExport('mp4')}>
           MP4
         </Button>
       </div>

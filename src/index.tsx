@@ -36,22 +36,18 @@ function makePreset(
 const datasetPresets = [
   makePreset('category-brands', 'category-brands.csv', categoryBrandRows as unknown as Array<Record<string, unknown>>, {
     name: 'Top Global Brands from 2000 to 2019',
-    source: 'InterBrand',
     valueLabel: 'Brand value, $m',
   }),
   makePreset('brand-values', 'brand_values.csv', brandValueRows as unknown as Array<Record<string, unknown>>, {
     name: 'Brand value interpolation sample',
-    source: 'Brand value sample',
     valueLabel: 'Brand value',
   }),
   makePreset('spotify-us-weekly-16', 'spotify-us-weekly-16.csv', spotifyRows as unknown as Array<Record<string, unknown>>, {
     name: 'Spotify US weekly top tracks',
-    source: 'Spotify',
     valueLabel: 'Streams',
   }),
   makePreset('test', 'test.csv', testRows as unknown as Array<Record<string, unknown>>, {
     name: 'Sample ranking',
-    source: 'Sample CSV',
     valueLabel: 'Score',
   }),
 ];

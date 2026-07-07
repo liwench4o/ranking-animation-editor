@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 import { BAR_SIZE, HEIGHT, MARGIN, TOP_N, WIDTH } from '../chart/constants';
 import { colorKeyOf, type ColorScale } from '../chart/color';
 import { createBandGeometry, getFillOpacity, getStroke } from '../chart/style';
+import { LIGHT_THEME, type ChartTheme } from '../chart/theme';
 import {
   BANNER_GAP,
   BANNER_PADDING_Y,
@@ -24,6 +25,8 @@ export interface FrameScene {
   subtitle: string;
   source?: string;
   color: ColorScale;
+  // Background/text palette; defaults to light so existing callers keep working.
+  theme?: ChartTheme;
 }
 
 const FONT_STACK = '"Aptos", "SF Pro Text", "Segoe UI", sans-serif';
@@ -33,7 +36,7 @@ const noSelection = new Set<string>();
 // Mirrors the SVG renderer in ChartCanvas: same constants, same style logic,
 // but stateless — every frame is drawn from scratch at its exact values.
 export function renderChartFrame(ctx: CanvasRenderingContext2D, scene: FrameScene): void {
-  const { data, label, effects, yPositions, bannerAlpha, title, subtitle, source, color } = scene;
+  const { data, label, effects, yPositions, bannerAlpha, title, subtitle, source, color, theme = LIGHT_THEME } = scene;
   const geometry = createBandGeometry();
   const visible = data.filter((datum) => datum.rank < TOP_N).slice(0, TOP_N);
   const maxValue = Math.max(1, d3.max(visible, (datum) => datum.value) ?? 1);
@@ -46,10 +49,10 @@ export function renderChartFrame(ctx: CanvasRenderingContext2D, scene: FrameScen
 
   ctx.globalAlpha = 1;
   ctx.setLineDash([]);
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = theme.background;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  drawAxis(ctx, x);
+  drawAxis(ctx, x, theme);
 
   for (const datum of drawable) {
     const barY = yFor(datum);
@@ -87,7 +90,7 @@ export function renderChartFrame(ctx: CanvasRenderingContext2D, scene: FrameScen
     ctx.strokeRect(x(0), ghostY, width, bandwidth);
     ctx.setLineDash([]);
 
-    ctx.fillStyle = '#64748b';
+    ctx.fillStyle = theme.ghostLabel;
     ctx.font = `600 11px ${FONT_STACK}`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
@@ -100,13 +103,14 @@ export function renderChartFrame(ctx: CanvasRenderingContext2D, scene: FrameScen
   for (const datum of drawable) {
     const barY = yFor(datum);
     const labelX = x(datum.value) - 6;
-    // Mirror the SVG label offsets: name at dy -0.25em, value +1.15em below.
-    ctx.fillStyle = '#111827';
+    const labelCenterY = barY + bandwidth / 2;
+    // Mirror the SVG label offsets, anchored on the bar center.
+    ctx.fillStyle = '#ffffff';
     ctx.font = `700 12px ${FONT_STACK}`;
-    ctx.fillText(datum.name, labelX, barY - 0.25 * 12);
-    ctx.fillStyle = '#64748b';
+    ctx.fillText(datum.name, labelX, labelCenterY - 0.25 * 12);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.84)';
     ctx.font = `500 12px ${FONT_STACK}`;
-    ctx.fillText(formatNumber(datum.value), labelX, barY + 0.9 * 12);
+    ctx.fillText(formatNumber(datum.value), labelX, labelCenterY + 0.9 * 12);
   }
 
   let bannerBottomY = HEIGHT - 60;
@@ -127,7 +131,7 @@ export function renderChartFrame(ctx: CanvasRenderingContext2D, scene: FrameScen
     const firstLineY = boxY + BANNER_PADDING_Y + BANNER_TEXT_BASELINE_OFFSET;
 
     ctx.globalAlpha = 0.92 * alpha;
-    ctx.fillStyle = '#0f766e';
+    ctx.fillStyle = '#1677ff';
     roundedRect(ctx, boxX, boxY, layout.boxWidth, layout.boxHeight, 8);
     ctx.fill();
     ctx.globalAlpha = alpha;
@@ -139,16 +143,16 @@ export function renderChartFrame(ctx: CanvasRenderingContext2D, scene: FrameScen
     bannerBottomY = boxY - BANNER_GAP;
   });
 
-  ctx.fillStyle = '#111827';
+  ctx.fillStyle = theme.title;
   ctx.font = `700 30px ${FONT_STACK}`;
   ctx.textAlign = 'left';
-  ctx.fillText(title, 0, 32);
+  ctx.fillText(title, 0, 18);
 
-  ctx.fillStyle = '#64748b';
+  ctx.fillStyle = theme.subtitle;
   ctx.font = `600 14px ${FONT_STACK}`;
-  ctx.fillText(subtitle, 0, 56);
+  ctx.fillText(subtitle, 0, 42);
 
-  ctx.fillStyle = '#334155';
+  ctx.fillStyle = theme.ticker;
   ctx.globalAlpha = 0.18;
   ctx.font = `700 78px ${FONT_STACK}`;
   ctx.textAlign = 'right';
@@ -158,22 +162,22 @@ export function renderChartFrame(ctx: CanvasRenderingContext2D, scene: FrameScen
   ctx.textBaseline = 'alphabetic';
 
   if (source) {
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = theme.source;
     ctx.font = `600 11px ${FONT_STACK}`;
     ctx.textAlign = 'right';
     ctx.fillText(`Source: ${source}`, WIDTH - 8, HEIGHT - 10);
   }
 }
 
-function drawAxis(ctx: CanvasRenderingContext2D, x: d3.ScaleLinear<number, number>): void {
+function drawAxis(ctx: CanvasRenderingContext2D, x: d3.ScaleLinear<number, number>, theme: ChartTheme): void {
   const tickCount = WIDTH / 160;
   const ticks = x.ticks(tickCount);
   const format = x.tickFormat(tickCount);
   const gridBottom = MARGIN.TOP + BAR_SIZE * (TOP_N + 0.1);
 
-  ctx.strokeStyle = '#eef2f7';
+  ctx.strokeStyle = theme.axisLine;
   ctx.lineWidth = 1;
-  ctx.fillStyle = '#64748b';
+  ctx.fillStyle = theme.axisText;
   ctx.font = `600 11px ${FONT_STACK}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';

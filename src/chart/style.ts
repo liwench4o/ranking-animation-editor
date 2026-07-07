@@ -2,8 +2,8 @@ import * as d3 from 'd3';
 import { BAR_SIZE, MARGIN, TOP_N } from './constants';
 import type { RankDatum, ResolvedEffects } from '../types';
 
-export const CONTOUR_COLOR = '#d64545';
-export const SELECTION_COLOR = '#0f766e';
+export const CONTOUR_COLOR = '#1677ff';
+export const SELECTION_COLOR = '#1677ff';
 export const BASE_OPACITY = 0.9;
 // Paper §3.2: while de-emphasis is active, irrelevant bars drop to 20% opacity.
 export const DIMMED_OPACITY = 0.2;

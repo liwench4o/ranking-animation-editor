@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
 import * as d3 from 'd3';
-import { BAR_SIZE, HEIGHT, MARGIN, TOP_N, WIDTH } from '../chart/constants';
+import { BAR_SIZE, FRAME_HEIGHT, FRAME_PADDING, FRAME_WIDTH, HEIGHT, MARGIN, TOP_N, WIDTH } from '../chart/constants';
 import { colorKeyOf, type ColorScale } from '../chart/color';
 import { createBandGeometry, getFillOpacity, getStroke } from '../chart/style';
+import type { ChartTheme } from '../chart/theme';
 import {
   BANNER_GAP,
   BANNER_PADDING_Y,
@@ -23,6 +24,7 @@ interface ChartCanvasProps {
   selectedNames: string[];
   source?: string;
   subtitle: string;
+  theme: ChartTheme;
   title: string;
 }
 
@@ -40,6 +42,7 @@ export function ChartCanvas({
   selectedNames,
   source,
   subtitle,
+  theme,
   title,
 }: ChartCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -65,16 +68,23 @@ export function ChartCanvas({
         .append('svg')
         .attr('class', 'ranking-chart')
         .attr('role', 'img')
-        .attr('viewBox', `0 0 ${WIDTH} ${HEIGHT}`)
+        .attr('viewBox', `${-FRAME_PADDING} ${-FRAME_PADDING} ${FRAME_WIDTH} ${FRAME_HEIGHT}`)
         .attr('preserveAspectRatio', 'xMidYMid meet');
 
+      svg
+        .append('rect')
+        .attr('class', 'chart-background')
+        .attr('x', -FRAME_PADDING)
+        .attr('y', -FRAME_PADDING)
+        .attr('width', FRAME_WIDTH)
+        .attr('height', FRAME_HEIGHT);
       svg.append('g').attr('class', 'axis-group');
       svg.append('g').attr('class', 'bar-group');
       svg.append('g').attr('class', 'ghost-group');
       svg.append('g').attr('class', 'label-group');
       svg.append('g').attr('class', 'overlay-group');
-      svg.append('text').attr('class', 'chart-title').attr('x', 0).attr('y', 32);
-      svg.append('text').attr('class', 'chart-subtitle').attr('x', 0).attr('y', 56);
+      svg.append('text').attr('class', 'chart-title').attr('x', 0).attr('y', 18);
+      svg.append('text').attr('class', 'chart-subtitle').attr('x', 0).attr('y', 42);
       svg
         .append('text')
         .attr('class', 'year-ticker')
@@ -226,7 +236,7 @@ export function ChartCanvas({
             .attr('class', 'bar-label')
             .attr('x', -6)
             .attr('dy', '-0.25em')
-            .attr('transform', (datum) => `translate(${x(datum.value)},${offListY})`)
+            .attr('transform', (datum) => `translate(${x(datum.value)},${offListY + y.bandwidth() / 2})`)
             .style('font-weight', '700')
             .style('cursor', 'pointer')
             .text((datum) => datum.name)
@@ -264,7 +274,7 @@ export function ChartCanvas({
 
     updatingLabels
       .attr('opacity', 1)
-      .attr('transform', (datum: RankDatum) => `translate(${x(datum.value)},${yOf(datum.rank)})`);
+      .attr('transform', (datum: RankDatum) => `translate(${x(datum.value)},${yOf(datum.rank) + y.bandwidth() / 2})`);
 
     if (canAnimate) {
       // The tween factory runs once when the transition starts, so the value
@@ -350,7 +360,7 @@ export function ChartCanvas({
     };
   }, [color, currentKeyframe, effects, frameDuration, onSelectName, selectedSet, source, subtitle, title]);
 
-  return <div ref={containerRef} className="chart-shell" data-testid="chart-canvas" />;
+  return <div ref={containerRef} className="chart-shell" data-theme={theme.name} data-testid="chart-canvas" />;
 }
 
 function isTestEnvironment(): boolean {

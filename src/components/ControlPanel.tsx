@@ -1,5 +1,16 @@
-import { Button, Form, Input, InputNumber, Segmented, Select, Slider, Tooltip } from 'antd';
+import {
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  Segmented,
+  Select,
+  Slider,
+  Tooltip,
+} from 'antd';
 import { InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { COLOR_MAP_OPTIONS, type ColorMapName } from '../chart/color';
+import { BASE_OPACITY } from '../chart/style';
 import { getEffectOptions } from '../foreshadowing/options';
 import type { ForeshadowingEffect, ForeshadowingMode } from '../types';
 
@@ -14,6 +25,8 @@ interface ControlPanelProps {
   addHint?: string;
   brandOptions: string[];
   caption: string;
+  colorMap: ColorMapName;
+  colorMapSwatches: Record<ColorMapName, string[]>;
   effect: ForeshadowingEffect;
   interpolation: number;
   maxRangeIndex: number;
@@ -23,18 +36,17 @@ interface ControlPanelProps {
   rangeEnd: number;
   rangeStart: number;
   selectedNames: string[];
-  source: string;
   subtitle: string;
   title: string;
   onAdd: () => void;
   onCaptionChange: (value: string) => void;
+  onColorMapChange: (value: ColorMapName) => void;
   onEffectChange: (value: ForeshadowingEffect) => void;
   onInterpolationChange: (value: number) => void;
   onModeChange: (value: ForeshadowingMode) => void;
   onPeriodDurationChange: (seconds: number) => void;
   onRangeChange: (start: number, end: number) => void;
   onSelectedNamesChange: (value: string[]) => void;
-  onSourceChange: (value: string) => void;
   onSubtitleChange: (value: string) => void;
   onTitleChange: (value: string) => void;
 }
@@ -43,6 +55,8 @@ export function ControlPanel({
   addHint,
   brandOptions,
   caption,
+  colorMap,
+  colorMapSwatches,
   effect,
   interpolation,
   maxRangeIndex,
@@ -52,35 +66,61 @@ export function ControlPanel({
   rangeEnd,
   rangeStart,
   selectedNames,
-  source,
   subtitle,
   title,
   onAdd,
   onCaptionChange,
+  onColorMapChange,
   onEffectChange,
   onInterpolationChange,
   onModeChange,
   onPeriodDurationChange,
   onRangeChange,
   onSelectedNamesChange,
-  onSourceChange,
   onSubtitleChange,
   onTitleChange,
 }: ControlPanelProps) {
   const effectOptions = getEffectOptions(mode);
   const formatPeriod = (index: number) => periodLabels[index] ?? String(index);
+  const colorMapOptions = COLOR_MAP_OPTIONS.map((option) => {
+    const swatches =
+      colorMapSwatches[option.value] ?? option.colors.slice(0, 6);
+
+    return {
+      label: (
+        <span className="color-map-option" title={option.label}>
+          <span aria-hidden="true" className="color-map-swatch-list">
+            {swatches.map((color, index) => (
+              // Match the bars, which render at BASE_OPACITY over the chart.
+              <span
+                className="color-map-swatch"
+                key={`${color}-${index}`}
+                style={{ backgroundColor: color, opacity: BASE_OPACITY }}
+              />
+            ))}
+          </span>
+          <span className="color-map-name">{option.label}</span>
+        </span>
+      ),
+      title: option.label,
+      value: option.value,
+    };
+  });
 
   return (
     <>
       <section className="tool-panel">
-        <h2 className="panel-title">Editing</h2>
+        <h2 className="panel-title">Highlighting</h2>
         <Form layout="vertical" size="small" requiredMark={false}>
           <Form.Item label="Select Item(s)">
             <Select
               aria-label="Select Item(s)"
               mode="multiple"
               maxTagCount="responsive"
-              options={brandOptions.map((name) => ({ label: name, value: name }))}
+              options={brandOptions.map((name) => ({
+                label: name,
+                value: name,
+              }))}
               placeholder="Select items"
               value={selectedNames}
               onChange={onSelectedNamesChange}
@@ -102,7 +142,10 @@ export function ControlPanel({
           <Form.Item label="Effect">
             <Segmented
               block
-              options={effectOptions.map((option) => ({ label: option.label, value: option.value }))}
+              options={effectOptions.map((option) => ({
+                label: option.label,
+                value: option.value,
+              }))}
               value={effect}
               onChange={(value) => onEffectChange(value as ForeshadowingEffect)}
             />
@@ -145,7 +188,13 @@ export function ControlPanel({
 
           <Tooltip title={addHint} placement="top">
             <span className="add-button-tooltip" title={addHint}>
-              <Button block disabled={Boolean(addHint)} icon={<PlusOutlined />} type="primary" onClick={onAdd}>
+              <Button
+                block
+                disabled={Boolean(addHint)}
+                icon={<PlusOutlined />}
+                type="primary"
+                onClick={onAdd}
+              >
                 Add
               </Button>
             </span>
@@ -155,7 +204,11 @@ export function ControlPanel({
 
       <section className="tool-panel">
         <h2 className="panel-title">Animation Setting</h2>
-        <Form className="compact-settings-form" size="small" requiredMark={false}>
+        <Form
+          className="compact-settings-form"
+          size="small"
+          requiredMark={false}
+        >
           <div className="settings-row">
             <label className="settings-label" htmlFor="title-input">
               Title
@@ -179,15 +232,15 @@ export function ControlPanel({
             />
           </div>
           <div className="settings-row">
-            <label className="settings-label" htmlFor="source-input">
-              Source
+            <label className="settings-label" htmlFor="color-map-select">
+              Color map
             </label>
-            <Input
-              aria-label="Source"
-              id="source-input"
-              placeholder="Shown under the chart"
-              value={source}
-              onChange={(event) => onSourceChange(event.target.value)}
+            <Select
+              aria-label="Color map"
+              id="color-map-select"
+              options={colorMapOptions}
+              value={colorMap}
+              onChange={(value) => onColorMapChange(value)}
             />
           </div>
           <div className="settings-row">
@@ -221,7 +274,9 @@ export function ControlPanel({
               max={10}
               step={0.1}
               value={periodDurationSeconds}
-              onChange={(value) => onPeriodDurationChange(Number(value ?? 1.25))}
+              onChange={(value) =>
+                onPeriodDurationChange(Number(value ?? 1.25))
+              }
             />
           </div>
         </Form>

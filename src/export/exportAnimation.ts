@@ -1,8 +1,9 @@
 import { GIFEncoder, applyPalette, quantize } from 'gifenc';
 import { ArrayBufferTarget, Muxer } from 'mp4-muxer';
-import { HEIGHT, TOP_N, WIDTH } from '../chart/constants';
+import { FRAME_HEIGHT, FRAME_PADDING, FRAME_WIDTH, TOP_N } from '../chart/constants';
 import type { ColorScale } from '../chart/color';
 import { createBandGeometry } from '../chart/style';
+import { LIGHT_THEME, type ChartTheme } from '../chart/theme';
 import { computeKeyframes } from '../data/dataset';
 import { resolveEffects } from '../foreshadowing/resolve';
 import { renderChartFrame } from './renderFrame';
@@ -15,6 +16,8 @@ export interface ExportOptions {
   subtitle: string;
   source?: string;
   color: ColorScale;
+  // Background/text palette; defaults to light so existing callers keep working.
+  theme?: ChartTheme;
   // Milliseconds of animation per data period.
   periodDurationMs: number;
   // How long a rank swap slides in the live preview (periodDuration / interpolation).
@@ -25,7 +28,7 @@ export interface ExportOptions {
 
 const GIF_FPS = 15;
 const MP4_FPS = 30;
-const MP4_SCALE = 2;
+export const MP4_SCALE = 2;
 const BANNER_FADE_MS = 400;
 
 export function planFrames(periodCount: number, fps: number, periodDurationMs: number) {
@@ -99,6 +102,7 @@ async function forEachFrame(
   onFrame: (frame: FrameContext) => void | Promise<void>,
 ): Promise<void> {
   const { dataset, specs, periodDurationMs, rankTransitionMs, signal, onProgress } = options;
+  const theme = options.theme ?? LIGHT_THEME;
   const { framesPerPeriod } = planFrames(dataset.periods.length, fps, periodDurationMs);
   const keyframes = computeKeyframes(dataset, framesPerPeriod);
 
@@ -107,8 +111,8 @@ async function forEachFrame(
   }
 
   const canvas = document.createElement('canvas');
-  canvas.width = WIDTH * scale;
-  canvas.height = HEIGHT * scale;
+  canvas.width = FRAME_WIDTH * scale;
+  canvas.height = FRAME_HEIGHT * scale;
   const ctx = canvas.getContext('2d');
 
   if (!ctx) {
@@ -136,7 +140,12 @@ async function forEachFrame(
       bannerAlpha.set(overlay.specId, Math.max(0, Math.min(1, elapsedMs / BANNER_FADE_MS)));
     }
 
+    // Paint the whole padded frame white, then shift the chart content into the
+    // interior so the surrounding gutter stays blank — matching the preview.
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    ctx.fillStyle = theme.background;
+    ctx.fillRect(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
+    ctx.setTransform(scale, 0, 0, scale, FRAME_PADDING * scale, FRAME_PADDING * scale);
     renderChartFrame(ctx, {
       data: renderData,
       label: keyframe.label,
@@ -147,6 +156,7 @@ async function forEachFrame(
       subtitle: options.subtitle,
       source: options.source,
       color: options.color,
+      theme,
     });
 
     await onFrame({ canvas, ctx, index, total: keyframes.length });
@@ -174,7 +184,7 @@ export async function exportGif(options: ExportOptions): Promise<Blob> {
   const delay = Math.round(1000 / GIF_FPS);
 
   await forEachFrame(options, GIF_FPS, 1, ({ ctx }) => {
-    const { data, width, height } = ctx.getImageData(0, 0, WIDTH, HEIGHT);
+    const { data, width, height } = ctx.getImageData(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
     const palette = quantize(data, 256);
     const indexed = applyPalette(data, palette);
     gif.writeFrame(indexed, width, height, { palette, delay });
@@ -189,8 +199,8 @@ export async function exportMp4(options: ExportOptions): Promise<Blob> {
     throw new Error('Video export needs WebCodecs — please use a recent Chrome, Edge, or Safari.');
   }
 
-  const width = WIDTH * MP4_SCALE;
-  const height = HEIGHT * MP4_SCALE;
+  const width = FRAME_WIDTH * MP4_SCALE;
+  const height = FRAME_HEIGHT * MP4_SCALE;
   const codec = await pickAvcCodec(width, height, MP4_FPS);
 
   const muxer = new Muxer({

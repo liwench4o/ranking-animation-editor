@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { readFileSync } from 'node:fs';
 import { App } from './App';
+import { MARGIN } from '../chart/constants';
+import { CONTOUR_COLOR, SELECTION_COLOR, createBandGeometry } from '../chart/style';
 import { datasetFromDelimitedText } from '../data/parseTimeSeries';
 import type { Dataset } from '../types';
 
@@ -15,7 +18,6 @@ const csv = [
 function makeDataset(meta: Record<string, string> = {}): Dataset {
   const result = datasetFromDelimitedText(csv, {
     name: 'Test ranking',
-    source: 'Test',
     valueLabel: 'Points',
     ...meta,
   });
@@ -27,12 +29,16 @@ function makeDataset(meta: Record<string, string> = {}): Dataset {
   return result.dataset;
 }
 
+function readAppStyles(): string {
+  return readFileSync('src/styles/index.css', 'utf8');
+}
+
 describe('App', () => {
   it('renders the editor, chart, timeline, and collapsible data panel', async () => {
     render(<App initialDataset={makeDataset()} />);
 
     expect(screen.getByRole('heading', { name: 'Visual Foreshadowing' })).toBeTruthy();
-    expect(screen.getByText('Editing')).toBeTruthy();
+    expect(screen.getByText('Highlighting')).toBeTruthy();
     expect(screen.getByText('Preview')).toBeTruthy();
     expect(screen.getByText('Timeline')).toBeTruthy();
     expect(screen.getByText('Upload CSV')).toBeTruthy();
@@ -89,19 +95,77 @@ describe('App', () => {
     expect(document.querySelector('.panel-heading-row')).toBeNull();
   });
 
-  it('updates the visible chart title, subtitle, and source from controls', async () => {
+  it('switches the preview and chart to dark mode from the Preview toggle', async () => {
+    render(<App initialDataset={makeDataset()} />);
+
+    const chartShell = document.querySelector('.chart-shell');
+    const previewPanel = document.querySelector('.preview-panel');
+
+    // Light is the default.
+    expect(chartShell?.getAttribute('data-theme')).toBe('light');
+    expect(previewPanel?.classList.contains('is-dark')).toBe(false);
+
+    await userEvent.click(screen.getByText('Dark'));
+
+    expect(chartShell?.getAttribute('data-theme')).toBe('dark');
+    expect(previewPanel?.classList.contains('is-dark')).toBe(true);
+
+    await userEvent.click(screen.getByText('Light'));
+
+    expect(chartShell?.getAttribute('data-theme')).toBe('light');
+    expect(previewPanel?.classList.contains('is-dark')).toBe(false);
+  });
+
+  it('balances desktop height through the preview chart instead of the export gap', () => {
+    const css = readAppStyles();
+
+    expect(css).not.toMatch(/\.export-panel\s*\{[^}]*margin-top:\s*auto/s);
+    expect(css).toMatch(/\.preview-panel\s*\{[^}]*display:\s*flex/s);
+    expect(css).toMatch(/\.preview-panel\s*\{[^}]*height:\s*var\(--balanced-preview-height,\s*auto\)/s);
+    expect(css).toMatch(/\.chart-shell\s*\{[^}]*flex:\s*1\s+1\s+auto/s);
+  });
+
+  it('updates the visible chart title and subtitle and exposes color map instead of source', async () => {
     render(<App initialDataset={makeDataset()} />);
 
     await userEvent.clear(screen.getByLabelText('Title'));
     await userEvent.type(screen.getByLabelText('Title'), 'Updated ranking');
     await userEvent.clear(screen.getByLabelText('Subtitle'));
     await userEvent.type(screen.getByLabelText('Subtitle'), 'Updated metric');
-    await userEvent.clear(screen.getByLabelText('Source'));
-    await userEvent.type(screen.getByLabelText('Source'), 'Fresh data');
+
+    const colorMapSelect = screen.getByRole('combobox', { name: 'Color map' });
+    await userEvent.click(colorMapSelect);
+    await userEvent.click(await screen.findByText('Soft contrast'));
 
     expect(screen.getByText('Updated ranking')).toBeTruthy();
     expect(screen.getByText('Updated metric')).toBeTruthy();
-    expect(screen.getByText('Source: Fresh data')).toBeTruthy();
+    expect(screen.getAllByText('Soft contrast').length).toBeGreaterThan(0);
+    expect(document.querySelectorAll('.color-map-swatch').length).toBeGreaterThanOrEqual(16);
+    expect(screen.queryByLabelText('Source')).toBeNull();
+    expect(screen.queryByText(/Source:/)).toBeNull();
+  });
+
+  it('uses Ant Design blue for selected and contour borders', async () => {
+    render(<App initialDataset={makeDataset()} />);
+
+    const betaBar = document.querySelector<SVGRectElement>('#Beta');
+    fireEvent.click(betaBar as SVGRectElement);
+    expect(betaBar?.getAttribute('stroke')).toBe(SELECTION_COLOR);
+    expect(SELECTION_COLOR).toBe('#1677ff');
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Select Item(s)' }));
+    await userEvent.click(await screen.findByTitle('Alpha'));
+    await userEvent.click(screen.getByText('Implicit'));
+    await userEvent.click(screen.getByText('Contour'));
+    await userEvent.click(screen.getByRole('button', { name: /Add/ }));
+
+    const alphaBar = document.querySelector<SVGRectElement>('#Alpha');
+    expect(alphaBar?.getAttribute('stroke')).toBe(CONTOUR_COLOR);
+    expect(CONTOUR_COLOR).toBe('#1677ff');
+  });
+
+  it('keeps a left chart gutter so bar outlines are not clipped', () => {
+    expect(MARGIN.LEFT).toBeGreaterThanOrEqual(4);
   });
 
   it('toggles playback and changes the selected period from the timeline slider', () => {
@@ -115,6 +179,27 @@ describe('App', () => {
     fireEvent.keyDown(slider, { code: 'ArrowRight', key: 'ArrowRight', keyCode: 39, which: 39 });
 
     expect(slider.getAttribute('aria-valuenow')).toBe('1');
+  });
+
+  it('places the timeline endpoint labels below the playback bar', () => {
+    render(<App initialDataset={makeDataset()} />);
+
+    const scale = document.querySelector('.timeline-scale');
+
+    expect(scale?.closest('.timeline-slider-block')).toBeTruthy();
+    expect(scale?.closest('.timeline-playbar')).toBeNull();
+  });
+
+  it('positions live chart labels at the vertical center of their bars', () => {
+    render(<App initialDataset={makeDataset()} />);
+
+    const geometry = createBandGeometry();
+    const betaLabel = [...document.querySelectorAll<SVGTextElement>('.ranking-chart .bar-label')].find((label) =>
+      label.textContent?.startsWith('Beta'),
+    );
+    const y = Number(/translate\([^,]+,([^)]+)\)/.exec(betaLabel?.getAttribute('transform') ?? '')?.[1]);
+
+    expect(y).toBeCloseTo(geometry.yOf(0) + geometry.bandwidth / 2);
   });
 
   it('restarts the animation from the transport controls', () => {
