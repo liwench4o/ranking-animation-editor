@@ -176,6 +176,7 @@ export function ControlPanel({
           <Form.Item className="range-form-item">
             <Slider
               range
+              className="flat-slider"
               ariaLabelForHandle={['Range start', 'Range end']}
               max={Math.max(1, maxRangeIndex)}
               min={0}

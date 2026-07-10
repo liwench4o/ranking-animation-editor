@@ -472,31 +472,58 @@ textarea {
   margin: 0;
 }
 
-.timeline-slider.ant-slider-horizontal {
+/* Shared thin, fully-rounded slider look for the playback bar and the Range
+   selector (the Smoothness slider stays on antd defaults). */
+.flat-slider.ant-slider-horizontal {
   padding-block: 4px;
 }
 
-.timeline-slider .ant-slider-rail,
-.timeline-slider .ant-slider-track,
-.timeline-slider .ant-slider-step {
+.flat-slider .ant-slider-rail,
+.flat-slider .ant-slider-track,
+.flat-slider .ant-slider-step {
   height: 4px;
   border-radius: 999px;
 }
 
-.timeline-slider .ant-slider-rail {
+.flat-slider .ant-slider-rail {
   background: #e8eef6;
 }
 
-.timeline-slider .ant-slider-track {
+.flat-slider .ant-slider-track {
   background: #1677ff;
 }
 
-.timeline-slider .ant-slider-handle {
+.flat-slider .ant-slider-handle {
   inset-block-start: calc(50% - 5px);
 }
 
-.timeline-slider .ant-slider-handle::after {
+.flat-slider .ant-slider-handle::after {
   box-shadow: 0 0 0 2px #1677ff;
+}
+
+.timeline-ticks {
+  position: relative;
+  height: 6px;
+  margin-top: 1px;
+  pointer-events: none;
+}
+
+/* Faint per-period hairlines: their density hints at how many intermediate
+   points sit between the start and end labels. */
+.timeline-tick {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 6px;
+  border-radius: 1px;
+  background: #cbd5e1;
+  transform: translateX(-50%);
+}
+
+.timeline-tick:first-child,
+.timeline-tick:last-child {
+  height: 8px;
+  background: #b6c2d1;
 }
 
 .timeline-scale {

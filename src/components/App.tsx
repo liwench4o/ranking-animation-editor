@@ -8,7 +8,7 @@ import {
   type CSSProperties,
 } from 'react';
 import { Button, ConfigProvider, Segmented, Select, Upload } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { MoonOutlined, SunOutlined, UploadOutlined } from '@ant-design/icons';
 import { ChartCanvas } from './ChartCanvas';
 import { ControlPanel } from './ControlPanel';
 import { DataTablePanel } from './DataTablePanel';
@@ -488,8 +488,8 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
                     size="small"
                     value={chartThemeName}
                     options={[
-                      { label: 'Light', value: 'light' },
-                      { label: 'Dark', value: 'dark' },
+                      { label: 'Light', value: 'light', icon: <SunOutlined /> },
+                      { label: 'Dark', value: 'dark', icon: <MoonOutlined /> },
                     ]}
                     onChange={(value) => setChartThemeName(value as ChartThemeName)}
                   />

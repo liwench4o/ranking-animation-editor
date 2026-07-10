@@ -59,7 +59,7 @@ export const TimelinePanel = forwardRef<HTMLElement, TimelinePanelProps>(functio
           <div className="timeline-playbar">
             <Slider
               ariaLabelForHandle="Timeline period"
-              className="timeline-slider"
+              className="timeline-slider flat-slider"
               max={safeMax}
               min={0}
               step={1}
@@ -68,6 +68,17 @@ export const TimelinePanel = forwardRef<HTMLElement, TimelinePanelProps>(functio
               onChange={(value) => onPeriodIndexChange(Number(value))}
             />
           </div>
+          {safeMax > 0 ? (
+            <div aria-hidden="true" className="timeline-ticks">
+              {Array.from({ length: safeMax + 1 }, (_, index) => (
+                <span
+                  key={index}
+                  className="timeline-tick"
+                  style={{ left: `${(index / safeMax) * 100}%` }}
+                />
+              ))}
+            </div>
+          ) : null}
           <div aria-hidden="true" className="timeline-scale">
             <span>{formatPeriod(0)}</span>
             <span>{formatPeriod(safeMax)}</span>
