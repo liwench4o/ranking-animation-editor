@@ -5,6 +5,7 @@ import type { ColorScale } from '../chart/color';
 import { createBandGeometry } from '../chart/style';
 import { LIGHT_THEME, type ChartTheme } from '../chart/theme';
 import { computeKeyframes } from '../data/dataset';
+import { makeEnvelope } from '../foreshadowing/envelope';
 import { resolveEffects } from '../foreshadowing/resolve';
 import { renderChartFrame } from './renderFrame';
 import type { Dataset, ForeshadowingSpec, RankDatum } from '../types';
@@ -29,7 +30,6 @@ export interface ExportOptions {
 const GIF_FPS = 15;
 const MP4_FPS = 30;
 export const MP4_SCALE = 2;
-const BANNER_FADE_MS = 400;
 
 export function planFrames(periodCount: number, fps: number, periodDurationMs: number) {
   const framesPerPeriod = Math.max(1, Math.round((fps * periodDurationMs) / 1000));
@@ -120,7 +120,8 @@ async function forEachFrame(
   }
 
   const frameDtMs = 1000 / fps;
-  const specById = new Map(specs.map((spec) => [spec.id, spec]));
+  // Stateless frames are drawn at their exact envelope value — no lookahead.
+  const envelope = makeEnvelope(periodDurationMs);
   const motionState: ExportMotionState = { yPositions: new Map(), lastDatumByName: new Map() };
 
   for (let index = 0; index < keyframes.length; index += 1) {
@@ -129,16 +130,8 @@ async function forEachFrame(
     }
 
     const keyframe = keyframes[index];
-    const effects = resolveEffects(specs, keyframe.time, keyframes, framesPerPeriod);
+    const effects = resolveEffects(specs, keyframe.time, keyframes, framesPerPeriod, { envelope });
     const renderData = advanceExportMotionState(keyframe.data, motionState, frameDtMs, rankTransitionMs, index === 0);
-
-    const bannerAlpha = new Map<string, number>();
-
-    for (const overlay of effects.overlays) {
-      const spec = specById.get(overlay.specId);
-      const elapsedMs = spec ? (keyframe.time - spec.start) * periodDurationMs : BANNER_FADE_MS;
-      bannerAlpha.set(overlay.specId, Math.max(0, Math.min(1, elapsedMs / BANNER_FADE_MS)));
-    }
 
     // Paint the whole padded frame white, then shift the chart content into the
     // interior so the surrounding gutter stays blank — matching the preview.
@@ -151,7 +144,6 @@ async function forEachFrame(
       label: keyframe.label,
       effects,
       yPositions: motionState.yPositions,
-      bannerAlpha,
       title: options.title,
       subtitle: options.subtitle,
       source: options.source,

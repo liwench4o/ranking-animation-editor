@@ -155,8 +155,10 @@ describe('App', () => {
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Select Item(s)' }));
     await userEvent.click(await screen.findByTitle('Alpha'));
-    await userEvent.click(screen.getByText('Implicit'));
-    await userEvent.click(screen.getByText('Contour'));
+    await userEvent.click(screen.getByTitle('Implicit'));
+    // getByTitle targets the segmented option; the timeline legend also shows
+    // "Contour" as plain text, so getByText would be ambiguous.
+    await userEvent.click(screen.getByTitle('Contour'));
     await userEvent.click(screen.getByRole('button', { name: /Add/ }));
 
     const alphaBar = document.querySelector<SVGRectElement>('#Alpha');
@@ -216,12 +218,15 @@ describe('App', () => {
   it('updates effect options when foreshadowing mode changes', async () => {
     render(<App initialDataset={makeDataset()} />);
 
-    expect(screen.getByText('Pre-scene')).toBeTruthy();
+    // Titles target the effect segmented options; the timeline legend renders
+    // all four effect names as plain text, so getByText would be ambiguous and
+    // "Pre-scene" would never disappear.
+    expect(screen.getByTitle('Pre-scene')).toBeTruthy();
 
-    await userEvent.click(screen.getByText('Implicit'));
+    await userEvent.click(screen.getByTitle('Implicit'));
 
-    expect(screen.getByText('De-Emphasis')).toBeTruthy();
-    expect(screen.queryByText('Pre-scene')).toBeNull();
+    expect(screen.getByTitle('De-Emphasis')).toBeTruthy();
+    expect(screen.queryByTitle('Pre-scene')).toBeNull();
   });
 
   it('adds a foreshadowing spec from the editor and lists it on the timeline', async () => {
@@ -236,7 +241,8 @@ describe('App', () => {
     await userEvent.click(screen.getByRole('button', { name: /Add/ }));
 
     expect(screen.queryByText(/No foreshadowing yet/)).toBeNull();
-    expect(screen.getByText('E: Prologue')).toBeTruthy();
+    // The band pill carries its details in the accessible name, not as text.
+    expect(screen.getByRole('button', { name: /E: Prologue/ })).toBeTruthy();
     expect(screen.getByText('Alpha overtakes Beta')).toBeTruthy();
 
     await userEvent.click(screen.getByRole('button', { name: 'Remove Alpha' }));

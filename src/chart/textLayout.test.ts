@@ -1,7 +1,5 @@
 import {
   BANNER_LINE_HEIGHT,
-  BANNER_PADDING_X,
-  BANNER_PADDING_Y,
   BANNER_TEXT_MAX_WIDTH,
   layoutTextBlock,
   wrapTextLines,
@@ -37,10 +35,21 @@ describe('wrapTextLines', () => {
     expect(lines.join('')).toBe('Supercalifragilisticexpialidocious');
     expect(lines.every((line) => measureText(line) <= 80)).toBe(true);
   });
+
+  it('caps the line count and marks the cut with an ellipsis', () => {
+    const lines = wrapTextLines('Alpha rises while Beta slows across the market', measureText, 170, 2);
+
+    expect(lines).toEqual(['Alpha rises while', 'Beta slows acros…']);
+    expect(lines.every((line) => measureText(line) <= 170)).toBe(true);
+  });
+
+  it('leaves captions within the cap untouched', () => {
+    expect(wrapTextLines('Alpha rises soon', measureText, 360, 2)).toEqual(['Alpha rises soon']);
+  });
 });
 
 describe('layoutTextBlock', () => {
-  it('reports wrapped dimensions for banner backgrounds', () => {
+  it('reports wrapped text dimensions for banner stacking', () => {
     const layout = layoutTextBlock(
       'Alpha rises while Beta slows across the market',
       measureText,
@@ -49,7 +58,6 @@ describe('layoutTextBlock', () => {
 
     expect(layout.lines.length).toBeGreaterThan(1);
     expect(layout.textWidth).toBeLessThanOrEqual(BANNER_TEXT_MAX_WIDTH);
-    expect(layout.boxWidth).toBeLessThanOrEqual(BANNER_TEXT_MAX_WIDTH + BANNER_PADDING_X * 2);
-    expect(layout.boxHeight).toBe(layout.lines.length * BANNER_LINE_HEIGHT + BANNER_PADDING_Y * 2);
+    expect(layout.textHeight).toBe(layout.lines.length * BANNER_LINE_HEIGHT);
   });
 });

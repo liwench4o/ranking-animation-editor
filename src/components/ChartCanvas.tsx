@@ -2,11 +2,12 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as d3 from 'd3';
 import { BAR_SIZE, FRAME_HEIGHT, FRAME_PADDING, FRAME_WIDTH, HEIGHT, MARGIN, TOP_N, WIDTH } from '../chart/constants';
 import { colorKeyOf, type ColorScale } from '../chart/color';
-import { createBandGeometry, getFillOpacity, getStroke } from '../chart/style';
+import { BANNER_MAX_ALPHA, createBandGeometry, getFillOpacity, getLabelOpacity, getStroke } from '../chart/style';
 import type { ChartTheme } from '../chart/theme';
 import {
   BANNER_GAP,
-  BANNER_PADDING_Y,
+  BANNER_MAX_LINES,
+  BANNER_STACK_BOTTOM,
   BANNER_TEXT_BASELINE_OFFSET,
   BANNER_TEXT_MAX_WIDTH,
   BANNER_LINE_HEIGHT,
@@ -30,8 +31,13 @@ interface ChartCanvasProps {
 
 const formatNumber = d3.format(',d');
 
-// Banner entrance is aesthetic, not frame pacing; keep it fixed.
-const BANNER_ENTRANCE_DURATION = 500;
+// Active effects fade in/out via the resolve-side envelope; this short exit
+// only covers specs the user deletes mid-flight in the editor.
+const EFFECT_EXIT_DURATION = 200;
+// The banner rises into place as its envelope alpha climbs.
+const BANNER_RISE = 12;
+const GHOST_CHIP_HEIGHT = 16;
+const GHOST_CHIP_PADDING_X = 4;
 
 export function ChartCanvas({
   colorScale,
@@ -155,13 +161,21 @@ export function ChartCanvas({
       ? joinedBars.transition().duration(frameDuration).ease(d3.easeLinear)
       : joinedBars;
 
+    // The dash pattern flips with selection state; tweening a dasharray string
+    // renders garbage mid-transition, so it stays outside the transition.
+    joinedBars.attr('stroke-dasharray', (datum) =>
+      getStroke(datum as RankDatum, effects, selectedSet)?.kind === 'selection' ? '6 4' : null,
+    );
+
     updatingBars
       .attr('fill', (datum: RankDatum) => color(colorKeyOf(datum)))
       .attr('fill-opacity', (datum: RankDatum) => getFillOpacity(datum, effects))
-      .attr('stroke', (datum: RankDatum) => getStroke(datum, effects, selectedSet))
-      .attr('stroke-width', (datum: RankDatum) =>
-        effects.decorations.get(datum.name)?.contour || selectedSet.has(datum.name) ? 2.5 : 0,
-      )
+      .attr('stroke', (datum: RankDatum) => getStroke(datum, effects, selectedSet)?.color ?? null)
+      .attr('stroke-opacity', (datum: RankDatum) => getStroke(datum, effects, selectedSet)?.alpha ?? 1)
+      .attr('stroke-width', (datum: RankDatum) => {
+        const stroke = getStroke(datum, effects, selectedSet);
+        return stroke ? (stroke.kind === 'contour' ? 2.5 : 2) : 0;
+      })
       .attr('x', x(0))
       .attr('y', (datum: RankDatum) => yOf(datum.rank))
       .attr('height', y.bandwidth())
@@ -186,13 +200,19 @@ export function ChartCanvas({
           .attr('stroke', (datum) => color(colorKeyOf(datum)))
           .attr('stroke-width', 1.5)
           .attr('stroke-dasharray', '5 4');
+        group
+          .append('path')
+          .attr('class', 'ghost-clamp-arrow')
+          .attr('d', 'M0,-5 L7,0 L0,5 Z')
+          .attr('fill', (datum) => color(colorKeyOf(datum)));
+        group.append('rect').attr('class', 'ghost-chip').attr('rx', 3).attr('ry', 3);
         group.append('text').attr('class', 'ghost-label').attr('text-anchor', 'end').attr('dy', '0.32em');
         return group;
       },
       (update) => update,
       (exit) => {
         if (canAnimate) {
-          return exit.transition().duration(frameDuration).ease(d3.easeLinear).attr('opacity', 0).remove();
+          return exit.transition().duration(EFFECT_EXIT_DURATION).ease(d3.easeLinear).attr('opacity', 0).remove();
         }
 
         return exit.remove();
@@ -203,21 +223,48 @@ export function ChartCanvas({
       .select<SVGTextElement>('text.ghost-label')
       .text((datum) => `${datum.name} · ${formatNumber(datum.value)}`);
 
+    // Chip widths must be measured after the label text is set and before the
+    // transition retargets the chip geometry.
+    const ghostLabelWidths = new Map<string, number>();
+    joinedGhosts.each(function measureGhostLabel(datum) {
+      const node = d3.select(this).select<SVGTextElement>('text.ghost-label').node();
+      const width =
+        node && typeof node.getComputedTextLength === 'function'
+          ? node.getComputedTextLength()
+          : `${datum.name} · ${formatNumber(datum.value)}`.length * 6;
+      ghostLabelWidths.set(`${datum.specId}:${datum.name}`, width);
+    });
+    const ghostLabelWidth = (datum: GhostBar) => ghostLabelWidths.get(`${datum.specId}:${datum.name}`) ?? 0;
+
     // The foreshadowed value may exceed the current axis domain; clamp the
-    // ghost to the plot edge so it stays visible.
+    // ghost to the plot edge so it stays visible, and point an arrow past the
+    // edge so the clamped length isn't read as the actual value.
     const ghostRight = (datum: GhostBar) => Math.min(x(datum.value), WIDTH - MARGIN.RIGHT);
+
+    joinedGhosts
+      .select('path.ghost-clamp-arrow')
+      .attr('display', (datum) => (x((datum as GhostBar).value) > WIDTH - MARGIN.RIGHT ? null : 'none'));
 
     const updatingGhosts: any = canAnimate
       ? joinedGhosts.transition().duration(frameDuration).ease(d3.easeLinear)
       : joinedGhosts;
 
-    updatingGhosts.attr('opacity', 1);
+    updatingGhosts.attr('opacity', (datum: GhostBar) => datum.alpha);
     updatingGhosts
-      .select('rect')
+      .select('rect.ghost-bar')
       .attr('x', x(0))
       .attr('y', (datum: GhostBar) => yOf(datum.rank))
       .attr('width', (datum: GhostBar) => Math.max(0, ghostRight(datum) - x(0)))
       .attr('height', y.bandwidth());
+    updatingGhosts
+      .select('path.ghost-clamp-arrow')
+      .attr('transform', (datum: GhostBar) => `translate(${WIDTH - MARGIN.RIGHT + 2},${yOf(datum.rank) + y.bandwidth() / 2})`);
+    updatingGhosts
+      .select('rect.ghost-chip')
+      .attr('x', (datum: GhostBar) => ghostRight(datum) - 6 - ghostLabelWidth(datum) - GHOST_CHIP_PADDING_X)
+      .attr('y', (datum: GhostBar) => yOf(datum.rank) + y.bandwidth() / 2 - GHOST_CHIP_HEIGHT / 2)
+      .attr('width', (datum: GhostBar) => ghostLabelWidth(datum) + GHOST_CHIP_PADDING_X * 2)
+      .attr('height', GHOST_CHIP_HEIGHT);
     updatingGhosts
       .select('text')
       .attr('x', (datum: GhostBar) => ghostRight(datum) - 6)
@@ -273,7 +320,7 @@ export function ChartCanvas({
       : joinedLabels;
 
     updatingLabels
-      .attr('opacity', 1)
+      .attr('opacity', (datum: RankDatum) => getLabelOpacity(datum, effects))
       .attr('transform', (datum: RankDatum) => `translate(${x(datum.value)},${yOf(datum.rank) + y.bandwidth() / 2})`);
 
     if (canAnimate) {
@@ -299,36 +346,36 @@ export function ChartCanvas({
           .append('g')
           .attr('class', 'foreshadow-banner')
           .attr('opacity', 0)
-          .attr('transform', 'translate(0,12)');
-        group.append('rect').attr('class', 'banner-box').attr('rx', 8).attr('ry', 8);
+          .attr('transform', `translate(0,${BANNER_RISE})`);
         group.append('text').attr('class', 'banner-text').attr('text-anchor', 'end');
         return group;
       },
       (update) => update,
       (exit) => {
         if (canAnimate) {
-          return exit.transition().duration(frameDuration).ease(d3.easeLinear).attr('opacity', 0).remove();
+          return exit.transition().duration(EFFECT_EXIT_DURATION).ease(d3.easeLinear).attr('opacity', 0).remove();
         }
 
         return exit.remove();
       },
     );
 
-    let bannerBottomY = HEIGHT - 60;
+    let bannerBottomY = HEIGHT - BANNER_STACK_BOTTOM;
 
     joinedBanners.each(function layoutBanner(datum) {
       const group = d3.select(this);
-      const textX = WIDTH - 30;
+      // Share the right edge with the year ticker and source line.
+      const textX = WIDTH - 8;
       const text = group.select<SVGTextElement>('text.banner-text').attr('x', textX).text(null);
       const node = text.node();
       const layout = layoutTextBlock(
         datum.text,
         (line) => measureSvgText(node, line),
         BANNER_TEXT_MAX_WIDTH,
+        BANNER_MAX_LINES,
       );
-      const boxX = textX - layout.boxWidth;
-      const boxY = bannerBottomY - layout.boxHeight;
-      const firstLineY = boxY + BANNER_PADDING_Y + BANNER_TEXT_BASELINE_OFFSET;
+      const slotY = bannerBottomY - layout.textHeight;
+      const firstLineY = slotY + BANNER_TEXT_BASELINE_OFFSET;
 
       text.attr('y', firstLineY).text(null);
       text
@@ -339,21 +386,18 @@ export function ChartCanvas({
         .attr('dy', (_line, lineIndex) => (lineIndex === 0 ? 0 : BANNER_LINE_HEIGHT))
         .text((line) => line);
 
-      group
-        .select('rect.banner-box')
-        .attr('x', boxX)
-        .attr('y', boxY)
-        .attr('width', layout.boxWidth)
-        .attr('height', layout.boxHeight);
-
-      bannerBottomY = boxY - BANNER_GAP;
+      bannerBottomY = slotY - BANNER_GAP;
     });
 
     const updatingBanners: any = canAnimate
-      ? joinedBanners.transition().duration(BANNER_ENTRANCE_DURATION).ease(d3.easeCubicOut)
+      ? joinedBanners.transition().duration(frameDuration).ease(d3.easeLinear)
       : joinedBanners;
 
-    updatingBanners.attr('opacity', 1).attr('transform', 'translate(0,0)');
+    updatingBanners
+      // The watermark ceiling scales the fade; the rise keeps the raw envelope
+      // alpha so the entrance motion still travels its full distance.
+      .attr('opacity', (datum: CaptionOverlay) => datum.alpha * BANNER_MAX_ALPHA)
+      .attr('transform', (datum: CaptionOverlay) => `translate(0,${BANNER_RISE * (1 - datum.alpha)})`);
 
     return () => {
       root.selectAll('*').interrupt();

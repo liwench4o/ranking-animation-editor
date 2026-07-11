@@ -8,7 +8,7 @@ import {
 import { renderChartFrame, type FrameScene } from './renderFrame';
 import { FRAME_HEIGHT, FRAME_PADDING, FRAME_WIDTH, HEIGHT, TOP_N, WIDTH } from '../chart/constants';
 import { createBandGeometry } from '../chart/style';
-import { BANNER_PADDING_X, BANNER_TEXT_MAX_WIDTH } from '../chart/textLayout';
+import { BANNER_LINE_HEIGHT, BANNER_TEXT_MAX_WIDTH } from '../chart/textLayout';
 import type { RankDatum, ResolvedEffects } from '../types';
 
 describe('export frame dimensions', () => {
@@ -115,7 +115,7 @@ describe('renderChartFrame', () => {
       rank: Math.min(TOP_N, index),
     }));
     const effects: ResolvedEffects = {
-      dimOthers: false,
+      dimAlpha: 0,
       decorations: new Map(),
       ghosts: [],
       overlays: [],
@@ -126,7 +126,6 @@ describe('renderChartFrame', () => {
       label: '2000',
       effects,
       yPositions: new Map(),
-      bannerAlpha: new Map(),
       title: 'Title',
       subtitle: 'Subtitle',
       source: 'Test',
@@ -171,12 +170,11 @@ describe('renderChartFrame', () => {
     const { ctx, calls } = makeStubContext();
     const scene = makeScene({
       effects: {
-        dimOthers: false,
+        dimAlpha: 0,
         decorations: new Map(),
-        ghosts: [{ specId: 's1', name: 'Item 3', value: 120, rank: 0 }],
-        overlays: [{ specId: 's2', text: 'Something is coming' }],
+        ghosts: [{ specId: 's1', name: 'Item 3', value: 120, rank: 0, alpha: 1 }],
+        overlays: [{ specId: 's2', text: 'Something is coming', alpha: 1 }],
       },
-      bannerAlpha: new Map([['s2', 1]]),
     });
 
     renderChartFrame(ctx, scene);
@@ -188,43 +186,41 @@ describe('renderChartFrame', () => {
   });
 
   it('wraps long prologue banners across multiple canvas lines', () => {
-    const { ctx, calls, sequence } = makeStubContext();
+    const { ctx, calls } = makeStubContext();
     const scene = makeScene({
       effects: {
-        dimOthers: false,
+        dimAlpha: 0,
         decorations: new Map(),
         ghosts: [],
         overlays: [
           {
             specId: 's2',
             text: 'Alpha rises while Beta slows across the market and the audience should see this in a compact banner',
+            alpha: 1,
           },
         ],
       },
-      bannerAlpha: new Map([['s2', 1]]),
     });
 
     renderChartFrame(ctx, scene);
 
-    const bannerLines = (calls.fillText ?? [])
-      .map((args) => args[0])
-      .filter((text) => typeof text === 'string' && /Alpha|Beta|market|audience|compact/.test(text));
-    expect(bannerLines.length).toBeGreaterThan(1);
+    const bannerCalls = (calls.fillText ?? []).filter(
+      (args) => typeof args[0] === 'string' && /Alpha|Beta|market|audience|compact/.test(args[0]),
+    );
+    expect(bannerCalls.length).toBeGreaterThan(1);
 
-    let lastMoveTo = -1;
-    for (let index = sequence.length - 1; index >= 0; index -= 1) {
-      if (sequence[index].name === 'moveTo') {
-        lastMoveTo = index;
-        break;
-      }
-    }
-    const backgroundLineTos = sequence.slice(lastMoveTo).filter((entry) => entry.name === 'lineTo');
-    const rectTopLeftX = Number(sequence[lastMoveTo].args[0]) - 8;
-    const rectTopY = Number(sequence[lastMoveTo].args[1]);
-    const rectWidth = Number(backgroundLineTos[0].args[0]) - rectTopLeftX + 8;
-    const rectHeight = Number(backgroundLineTos[1].args[1]) - rectTopY + 8;
+    // Wrapped lines share the chart's right text edge (same as the ticker and
+    // source line), stack one line-height apart, and fit the max text width
+    // (the stub measures 8px per character).
+    bannerCalls.forEach((args) => expect(args[1]).toBe(WIDTH - 8));
+    const lineYs = bannerCalls.map((args) => Number(args[2]));
+    lineYs.slice(1).forEach((lineY, index) => expect(lineY - lineYs[index]).toBeCloseTo(BANNER_LINE_HEIGHT));
+    bannerCalls.forEach((args) =>
+      expect(String(args[0]).length * 8).toBeLessThanOrEqual(BANNER_TEXT_MAX_WIDTH),
+    );
 
-    expect(rectWidth).toBeLessThanOrEqual(BANNER_TEXT_MAX_WIDTH + BANNER_PADDING_X * 2);
-    expect(rectHeight).toBeGreaterThan(34);
+    // No background box behind the caption: arcTo only ever served rounded
+    // rects (banner box, ghost chips), and this scene has no ghosts.
+    expect(calls.arcTo).toBeUndefined();
   });
 });

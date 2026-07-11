@@ -1,11 +1,12 @@
 import * as d3 from 'd3';
 import { BAR_SIZE, HEIGHT, MARGIN, TOP_N, WIDTH } from '../chart/constants';
 import { colorKeyOf, type ColorScale } from '../chart/color';
-import { createBandGeometry, getFillOpacity, getStroke } from '../chart/style';
+import { BANNER_MAX_ALPHA, createBandGeometry, getFillOpacity, getLabelOpacity, getStroke } from '../chart/style';
 import { LIGHT_THEME, type ChartTheme } from '../chart/theme';
 import {
   BANNER_GAP,
-  BANNER_PADDING_Y,
+  BANNER_MAX_LINES,
+  BANNER_STACK_BOTTOM,
   BANNER_TEXT_BASELINE_OFFSET,
   BANNER_TEXT_MAX_WIDTH,
   BANNER_LINE_HEIGHT,
@@ -19,8 +20,6 @@ export interface FrameScene {
   effects: ResolvedEffects;
   // Smoothed y position per entity; entities absent from the map sit off-list.
   yPositions: Map<string, number>;
-  // Fade-in alpha per prologue spec id.
-  bannerAlpha: Map<string, number>;
   title: string;
   subtitle: string;
   source?: string;
@@ -32,11 +31,17 @@ export interface FrameScene {
 const FONT_STACK = '"Aptos", "SF Pro Text", "Segoe UI", sans-serif';
 const formatNumber = d3.format(',d');
 const noSelection = new Set<string>();
+// Mirror the SVG constants in ChartCanvas.
+const BANNER_RISE = 12;
+const GHOST_CHIP_HEIGHT = 16;
+const GHOST_CHIP_PADDING_X = 4;
+// Mirrors the .bar-label halo in index.css (paint-order: stroke).
+const LABEL_HALO = 'rgba(15, 23, 42, 0.22)';
 
 // Mirrors the SVG renderer in ChartCanvas: same constants, same style logic,
 // but stateless — every frame is drawn from scratch at its exact values.
 export function renderChartFrame(ctx: CanvasRenderingContext2D, scene: FrameScene): void {
-  const { data, label, effects, yPositions, bannerAlpha, title, subtitle, source, color, theme = LIGHT_THEME } = scene;
+  const { data, label, effects, yPositions, title, subtitle, source, color, theme = LIGHT_THEME } = scene;
   const geometry = createBandGeometry();
   const visible = data.filter((datum) => datum.rank < TOP_N).slice(0, TOP_N);
   const maxValue = Math.max(1, d3.max(visible, (datum) => datum.value) ?? 1);
@@ -66,81 +71,136 @@ export function renderChartFrame(ctx: CanvasRenderingContext2D, scene: FrameScen
     const stroke = getStroke(datum, effects, noSelection);
 
     if (stroke) {
-      ctx.strokeStyle = stroke;
+      ctx.globalAlpha = stroke.alpha;
+      ctx.strokeStyle = stroke.color;
       ctx.lineWidth = 2.5;
       ctx.strokeRect(x(0), barY, width, bandwidth);
+      ctx.globalAlpha = 1;
     }
   }
 
   for (const ghost of effects.ghosts) {
+    if (ghost.alpha <= 0) {
+      continue;
+    }
+
     // Same clamp as the SVG renderer: the foreshadowed value may exceed the
-    // current axis domain.
-    const right = Math.min(x(ghost.value), WIDTH - MARGIN.RIGHT);
+    // current axis domain; the arrow past the edge marks the clamped length.
+    const plotRight = WIDTH - MARGIN.RIGHT;
+    const clamped = x(ghost.value) > plotRight;
+    const right = Math.min(x(ghost.value), plotRight);
     const ghostY = geometry.yOf(ghost.rank);
+    const ghostCenterY = ghostY + bandwidth / 2;
     const width = Math.max(0, right - x(0));
     const ghostColor = color(colorKeyOf(ghost));
 
-    ctx.globalAlpha = 0.12;
+    ctx.globalAlpha = 0.12 * ghost.alpha;
     ctx.fillStyle = ghostColor;
     ctx.fillRect(x(0), ghostY, width, bandwidth);
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = ghost.alpha;
     ctx.strokeStyle = ghostColor;
     ctx.lineWidth = 1.5;
     ctx.setLineDash([5, 4]);
     ctx.strokeRect(x(0), ghostY, width, bandwidth);
     ctx.setLineDash([]);
 
-    ctx.fillStyle = theme.ghostLabel;
+    if (clamped) {
+      ctx.beginPath();
+      ctx.moveTo(plotRight + 2, ghostCenterY - 5);
+      ctx.lineTo(plotRight + 9, ghostCenterY);
+      ctx.lineTo(plotRight + 2, ghostCenterY + 5);
+      ctx.closePath();
+      ctx.fillStyle = ghostColor;
+      ctx.fill();
+    }
+
     ctx.font = `600 11px ${FONT_STACK}`;
+    const ghostText = `${ghost.name} · ${formatNumber(ghost.value)}`;
+    const labelWidth = ctx.measureText(ghostText).width;
+
+    ctx.globalAlpha = 0.85 * ghost.alpha;
+    ctx.fillStyle = theme.background;
+    roundedRect(
+      ctx,
+      right - 6 - labelWidth - GHOST_CHIP_PADDING_X,
+      ghostCenterY - GHOST_CHIP_HEIGHT / 2,
+      labelWidth + GHOST_CHIP_PADDING_X * 2,
+      GHOST_CHIP_HEIGHT,
+      3,
+    );
+    ctx.fill();
+
+    ctx.globalAlpha = ghost.alpha;
+    ctx.fillStyle = theme.ghostLabel;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`${ghost.name} · ${formatNumber(ghost.value)}`, right - 6, ghostY + bandwidth / 2);
+    ctx.fillText(ghostText, right - 6, ghostCenterY);
+    ctx.globalAlpha = 1;
   }
 
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'right';
+  ctx.lineJoin = 'round';
 
   for (const datum of drawable) {
     const barY = yFor(datum);
     const labelX = x(datum.value) - 6;
     const labelCenterY = barY + bandwidth / 2;
-    // Mirror the SVG label offsets, anchored on the bar center.
+    // Mirror the SVG label offsets, anchored on the bar center, with the same
+    // halo and de-emphasis ramp as the live labels.
+    ctx.globalAlpha = getLabelOpacity(datum, effects);
+    ctx.strokeStyle = LABEL_HALO;
+    ctx.lineWidth = 2;
     ctx.fillStyle = '#ffffff';
     ctx.font = `700 12px ${FONT_STACK}`;
+    ctx.strokeText(datum.name, labelX, labelCenterY - 0.25 * 12);
     ctx.fillText(datum.name, labelX, labelCenterY - 0.25 * 12);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.84)';
     ctx.font = `500 12px ${FONT_STACK}`;
+    ctx.strokeText(formatNumber(datum.value), labelX, labelCenterY + 0.9 * 12);
     ctx.fillText(formatNumber(datum.value), labelX, labelCenterY + 0.9 * 12);
   }
 
-  let bannerBottomY = HEIGHT - 60;
+  ctx.globalAlpha = 1;
+
+  let bannerBottomY = HEIGHT - BANNER_STACK_BOTTOM;
 
   effects.overlays.forEach((overlay) => {
-    const alpha = bannerAlpha.get(overlay.specId) ?? 1;
+    const alpha = overlay.alpha;
 
     if (alpha <= 0) {
       return;
     }
 
-    const textX = WIDTH - 30;
+    // Share the right edge with the year ticker and source line.
+    const textX = WIDTH - 8;
     ctx.font = `700 15px ${FONT_STACK}`;
     ctx.textAlign = 'right';
-    const layout = layoutTextBlock(overlay.text, (line) => ctx.measureText(line).width, BANNER_TEXT_MAX_WIDTH);
-    const boxX = textX - layout.boxWidth;
-    const boxY = bannerBottomY - layout.boxHeight;
-    const firstLineY = boxY + BANNER_PADDING_Y + BANNER_TEXT_BASELINE_OFFSET;
+    const layout = layoutTextBlock(
+      overlay.text,
+      (line) => ctx.measureText(line).width,
+      BANNER_TEXT_MAX_WIDTH,
+      BANNER_MAX_LINES,
+    );
+    const slotY = bannerBottomY - layout.textHeight;
+    // The banner rises into its settled slot as the envelope climbs, matching
+    // the SVG entrance; the stack math uses the settled position.
+    const rise = BANNER_RISE * (1 - alpha);
+    const firstLineY = slotY + BANNER_TEXT_BASELINE_OFFSET;
 
-    ctx.globalAlpha = 0.92 * alpha;
-    ctx.fillStyle = '#1677ff';
-    roundedRect(ctx, boxX, boxY, layout.boxWidth, layout.boxHeight, 8);
-    ctx.fill();
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = '#ffffff';
+    // Watermark over the bars (mirrors .banner-text in index.css): translucent
+    // gray text with a halo in the chart background color for legibility.
+    ctx.globalAlpha = alpha * BANNER_MAX_ALPHA;
+    ctx.strokeStyle = theme.background;
+    ctx.lineWidth = 3;
+    ctx.fillStyle = theme.bannerText;
     layout.lines.forEach((line, lineIndex) => {
-      ctx.fillText(line, textX, firstLineY + lineIndex * BANNER_LINE_HEIGHT);
+      const lineY = firstLineY + rise + lineIndex * BANNER_LINE_HEIGHT;
+      ctx.strokeText(line, textX, lineY);
+      ctx.fillText(line, textX, lineY);
     });
     ctx.globalAlpha = 1;
-    bannerBottomY = boxY - BANNER_GAP;
+    bannerBottomY = slotY - BANNER_GAP;
   });
 
   ctx.fillStyle = theme.title;

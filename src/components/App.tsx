@@ -27,6 +27,7 @@ import {
 import { DEFAULT_CHART_THEME, getChartTheme, type ChartThemeName } from '../chart/theme';
 import { computeKeyframes } from '../data/dataset';
 import { parseDatasetFile } from '../data/parseTimeSeries';
+import { makeEnvelope } from '../foreshadowing/envelope';
 import { getEffectOptions } from '../foreshadowing/options';
 import { resolveEffects } from '../foreshadowing/resolve';
 import type {
@@ -125,9 +126,16 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
     return options;
   }, [activeDatasetKey, availableDatasetPresets, dataset.meta.fileName, dataset.meta.name]);
 
+  // One frame of lookahead: the preview retargets a linear transition per
+  // frame, so it reaches each sampled alpha at the *next* tick — sampling
+  // ahead makes fade-outs land exactly on the event.
+  const effectEnvelope = useMemo(
+    () => makeEnvelope(periodDuration, 1 / interpolation),
+    [interpolation, periodDuration],
+  );
   const effects = useMemo(
-    () => resolveEffects(foreshadowingSpecs, frameTime, keyframes, interpolation),
-    [foreshadowingSpecs, frameTime, interpolation, keyframes],
+    () => resolveEffects(foreshadowingSpecs, frameTime, keyframes, interpolation, { envelope: effectEnvelope }),
+    [effectEnvelope, foreshadowingSpecs, frameTime, interpolation, keyframes],
   );
 
   const addHint = useMemo(() => {

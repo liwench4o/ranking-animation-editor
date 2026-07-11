@@ -61,6 +61,8 @@ export interface ForeshadowingSpec {
 
 export interface BarDecoration {
   contour: boolean;
+  // Peak envelope alpha across the active contour specs targeting this bar.
+  contourAlpha: number;
   emphasized: boolean;
 }
 
@@ -70,15 +72,20 @@ export interface GhostBar {
   value: number;
   rank: number;
   category?: string;
+  // Envelope alpha of the owning spec (0..1).
+  alpha: number;
 }
 
 export interface CaptionOverlay {
   specId: string;
   text: string;
+  // Envelope alpha of the owning spec (0..1).
+  alpha: number;
 }
 
 export interface ResolvedEffects {
-  dimOthers: boolean;
+  // Strength of the strongest active de-emphasis spec (0..1); 0 means no dim.
+  dimAlpha: number;
   decorations: Map<string, BarDecoration>;
   ghosts: GhostBar[];
   overlays: CaptionOverlay[];

@@ -155,7 +155,10 @@ export function ControlPanel({
           <Form.Item label="Caption">
             <Input.TextArea
               aria-label="Caption"
-              autoSize={{ minRows: 3, maxRows: 5 }}
+              // Fixed rows: the preview panel is sized against this column
+              // (previewLayout), so an auto-growing field would resize the
+              // chart while typing or when Add clears the caption.
+              autoSize={{ minRows: 3, maxRows: 3 }}
               disabled={effect !== 'prologue'}
               placeholder={
                 effect === 'prologue'

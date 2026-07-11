@@ -12,6 +12,8 @@ export interface ChartTheme {
   axisText: string;
   axisLine: string;
   ghostLabel: string;
+  // Prologue caption text; drawn with a halo in `background` for legibility.
+  bannerText: string;
 }
 
 // Light theme mirrors the colors previously hardcoded in the CSS and the export
@@ -27,6 +29,7 @@ export const LIGHT_THEME: ChartTheme = {
   axisText: '#64748b',
   axisLine: '#eef2f7',
   ghostLabel: '#64748b',
+  bannerText: '#64748b',
 };
 
 export const DARK_THEME: ChartTheme = {
@@ -39,6 +42,7 @@ export const DARK_THEME: ChartTheme = {
   axisText: '#94a3b8',
   axisLine: '#1f2933',
   ghostLabel: '#94a3b8',
+  bannerText: '#cbd5e1',
 };
 
 export const DEFAULT_CHART_THEME: ChartThemeName = 'light';

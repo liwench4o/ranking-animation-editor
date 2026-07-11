@@ -1,11 +1,12 @@
 import { forwardRef } from 'react';
-import { Button, Slider, Tag } from 'antd';
+import { Button, Slider, Tag, Tooltip } from 'antd';
 import {
   CaretRightOutlined,
   DeleteOutlined,
   PauseOutlined,
   StepBackwardOutlined,
 } from '@ant-design/icons';
+import { ALL_EFFECTS } from '../foreshadowing/options';
 import type { ForeshadowingSpec } from '../types';
 
 interface TimelinePanelProps {
@@ -38,7 +39,17 @@ export const TimelinePanel = forwardRef<HTMLElement, TimelinePanelProps>(functio
 
   return (
     <section ref={ref} className="timeline-panel">
-      <h2 className="panel-title">Timeline</h2>
+      <div className="timeline-header">
+        <h2 className="panel-title">Timeline</h2>
+        <div className="timeline-legend">
+          {ALL_EFFECTS.map((effect) => (
+            <span key={effect.value} className="timeline-legend-item">
+              <span aria-hidden="true" className={`timeline-legend-swatch ${effect.value}`} />
+              {effect.label}
+            </span>
+          ))}
+        </div>
+      </div>
       <div className="timeline-controls">
         <div className="transport-buttons">
           <Button
@@ -94,6 +105,9 @@ export const TimelinePanel = forwardRef<HTMLElement, TimelinePanelProps>(functio
             const percentWidth = safeMax > 0 ? ((item.end - item.start) / safeMax) * 100 : 100;
             const label = `${item.mode === 'explicit' ? 'E' : 'I'}: ${formatEffect(item.effect)}`;
             const targets = item.targets.join(', ');
+            // The band is a bare pill (effect is carried by color, per the header
+            // legend), so the details live in its tooltip and accessible name.
+            const description = `${targets} · ${label} · ${formatPeriod(item.start)}–${formatPeriod(item.end)}`;
 
             return (
               <div key={item.id} className="timeline-row">
@@ -104,19 +118,18 @@ export const TimelinePanel = forwardRef<HTMLElement, TimelinePanelProps>(functio
                   type="text"
                   onClick={() => onRemoveItem(item.id)}
                 />
-                <Tag className="timeline-brand" title={targets}>
-                  {targets}
-                </Tag>
+                <Tooltip title={targets}>
+                  <Tag className="timeline-brand">{targets}</Tag>
+                </Tooltip>
                 <div className="timeline-track">
                   <button
-                    className={`timeline-band ${item.mode}`}
+                    aria-label={description}
+                    className={`timeline-band ${item.effect}`}
                     style={{ left: `${percentStart}%`, width: `${Math.max(2, percentWidth)}%` }}
-                    title={`${targets} · ${label} · ${formatPeriod(item.start)}–${formatPeriod(item.end)}`}
+                    title={description}
                     type="button"
                     onClick={() => onEditItem(item)}
-                  >
-                    {label}
-                  </button>
+                  />
                 </div>
               </div>
             );

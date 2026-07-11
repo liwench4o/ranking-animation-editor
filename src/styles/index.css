@@ -362,15 +362,17 @@ textarea {
   opacity: 0.18;
 }
 
-.ranking-chart .banner-box {
-  fill: #1677ff;
-  opacity: 0.92;
-}
-
+/* Quiet caption in the blank bottom-right zone: no box, gray text with a halo
+   in the chart background color so it stays legible when a long bar passes
+   underneath. Colors must match bannerText in src/chart/theme.ts (the export
+   canvas reads the theme object, this rule styles the live SVG). */
 .ranking-chart .banner-text {
-  fill: #ffffff;
+  fill: #64748b;
   font-size: 15px;
   font-weight: 720;
+  paint-order: stroke fill;
+  stroke: #ffffff;
+  stroke-width: 3px;
 }
 
 .ranking-chart .ghost-label {
@@ -378,6 +380,13 @@ textarea {
   font-size: 11px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
+}
+
+/* Backdrop chip so the ghost label stays readable over the bar that currently
+   occupies the foreshadowed rank slot. */
+.ranking-chart .ghost-chip {
+  fill: #ffffff;
+  fill-opacity: 0.85;
 }
 
 .ranking-chart .bar-label {
@@ -432,6 +441,15 @@ textarea {
   fill: #94a3b8;
 }
 
+.chart-shell[data-theme='dark'] .ghost-chip {
+  fill: #0b0e14;
+}
+
+.chart-shell[data-theme='dark'] .banner-text {
+  fill: #cbd5e1;
+  stroke: #0b0e14;
+}
+
 .chart-shell[data-theme='dark'] .axis-group .tick text {
   fill: #94a3b8;
 }
@@ -440,23 +458,106 @@ textarea {
   stroke: #1f2933;
 }
 
+.timeline-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.timeline-header .panel-title {
+  margin-bottom: 0;
+}
+
+.timeline-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px 12px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.timeline-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Swatches are miniature spec bands, so the legend explains which effect each
+   colored pill below stands for. */
+.timeline-legend-swatch {
+  width: 16px;
+  height: 6px;
+  border-radius: 999px;
+}
+
+/* One color per foreshadowing effect, shared by the legend swatch and the band
+   pill so they always match. Explicit (Prologue, Pre-scene) uses a low-sat
+   warm pair; Implicit (Contour, De-emphasis) uses a low-sat cool pair. Every
+   swatch carries a visible text label and every band row has a name tag +
+   tooltip, so sub-3:1 contrast against the white panel is acceptable. */
+.timeline-legend-swatch.prologue,
+.timeline-band.prologue {
+  background: #e09a7d;
+}
+
+.timeline-legend-swatch.pre-scene,
+.timeline-band.pre-scene {
+  background: #d9b56e;
+}
+
+.timeline-legend-swatch.contour,
+.timeline-band.contour {
+  background: #5fadc0;
+}
+
+.timeline-legend-swatch.de-emphasis,
+.timeline-band.de-emphasis {
+  background: #8498c9;
+}
+
+/* One shared column template for the controls row and every spec row, so the
+   playback rail and the spec bands cover the exact same x-range and read as one
+   time axis: the rail starts above the tracks' left edge and both end at the
+   same right inset (kept clear of the scrollbar). */
+.timeline-panel {
+  --timeline-lead-col: 24px;
+  --timeline-name-col: 72px;
+  --timeline-col-gap: 6px;
+  --timeline-end-inset: 8px;
+  /* Width of the spec list's scrollbar gutter (matches ::-webkit-scrollbar).
+     The playback rail sits outside the scroll container, so its end inset must
+     add this to land on the same x as the tracks inside. */
+  --timeline-scrollbar-gutter: 8px;
+}
+
 .timeline-controls {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns:
+    var(--timeline-lead-col) var(--timeline-name-col)
+    minmax(0, 1fr);
+  column-gap: var(--timeline-col-gap);
   align-items: start;
   margin-top: 0;
 }
 
 .transport-buttons {
   display: flex;
-  gap: 8px;
+  grid-column: 1 / 3;
+  gap: 12px;
 }
 
 .timeline-slider-block {
   display: grid;
+  grid-column: 3;
   gap: 2px;
   min-width: 0;
+  margin-inline-end: calc(
+    var(--timeline-end-inset) + var(--timeline-scrollbar-gutter)
+  );
 }
 
 .timeline-playbar {
@@ -552,31 +653,81 @@ textarea {
   transform: translate(-50%, 0);
 }
 
+/* Fixed height (not max-height): the timeline's footprint must not change as
+   specs are added, because the preview panel is sized against this panel
+   (previewLayout) and would shrink the chart with every added row. The height
+   shows three full 24px rows (8px gaps) plus half of a fourth: the clipped row
+   is the scroll affordance — overlay scrollbars hide when idle, so a cut row is
+   what tells the user more specs sit below. */
 .timeline-items {
   display: grid;
+  align-content: start;
   gap: 8px;
-  max-height: 150px;
+  height: 108px;
   overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+/* Chrome ignores ::-webkit-scrollbar styling when scrollbar-width/color are
+   set, which silently reverts to auto-hiding overlay scrollbars — so the
+   Firefox properties only apply where the webkit pseudo-elements don't. */
+@supports not selector(::-webkit-scrollbar) {
+  .timeline-items {
+    scrollbar-width: thin;
+    scrollbar-color: #94a3b8 #f1f5f9;
+  }
+}
+
+.timeline-items::-webkit-scrollbar {
+  width: var(--timeline-scrollbar-gutter);
+}
+
+.timeline-items::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #94a3b8;
+}
+
+.timeline-items::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.timeline-items::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: #f1f5f9;
 }
 
 .timeline-row {
   display: grid;
-  grid-template-columns: 28px 82px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns:
+    var(--timeline-lead-col) var(--timeline-name-col)
+    minmax(0, 1fr);
+  column-gap: var(--timeline-col-gap);
   align-items: center;
 }
 
 .timeline-brand {
   overflow: hidden;
+  margin-inline-end: 0;
+  border: none;
+  border-radius: 5px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* Rail + band mirror the playback bar's thin fully-rounded look; effect is
+   carried by color alone (see .timeline-legend). The end inset matches the
+   playback rail's, keeping the longest band's rounded tip clear of the
+   scrollbar and both axes ending on the same x. */
 .timeline-track {
   position: relative;
   min-width: 0;
-  height: 16px;
+  height: 8px;
+  margin-inline-end: var(--timeline-end-inset);
   border-radius: 999px;
   background: #eef2f7;
   overflow: hidden;
@@ -588,23 +739,19 @@ textarea {
   height: 100%;
   border: none;
   border-radius: 999px;
-  padding: 0 8px;
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 16px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 0;
+  opacity: 0.9;
   cursor: pointer;
+  transition: opacity 0.12s ease;
 }
 
-.timeline-band.explicit {
-  background: #1677ff;
+.timeline-band:hover {
+  opacity: 1;
 }
 
-.timeline-band.implicit {
-  background: #64748b;
+.timeline-band:focus-visible {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
 }
 
 .timeline-empty {
@@ -757,7 +904,9 @@ textarea {
   font-variant-numeric: tabular-nums;
   text-align: right;
   cursor: pointer;
-  transition: background-color 0.12s ease, color 0.12s ease;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
 }
 
 .cell-edit-button:hover {
@@ -843,7 +992,7 @@ textarea {
     min-height: 330px;
   }
 
-  .timeline-row {
-    grid-template-columns: 28px 74px minmax(0, 1fr);
+  .timeline-panel {
+    --timeline-name-col: 64px;
   }
 }
