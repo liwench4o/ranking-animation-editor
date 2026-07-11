@@ -695,20 +695,88 @@ textarea {
   margin-bottom: 10px;
 }
 
+/* Data grid: hairline rows only — no vertical rules, no header fill. Column
+   structure is carried by the right-aligned tabular numerals, and color is
+   reserved for the one interaction (editing a cell). */
+.data-panel .ant-table-thead > tr > th,
+.data-panel .ant-table-thead > tr > td {
+  border-bottom: 1px solid #dce5ef;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.data-panel .ant-table-thead > tr > th::before,
+.data-panel .ant-table-thead > tr > td::before {
+  display: none;
+}
+
+.data-panel .ant-table-thead th.ant-table-column-has-sorters:hover {
+  background: #f8fafc;
+}
+
+.data-panel .ant-table-column-sorter {
+  color: #cbd5e1;
+}
+
+.data-panel .ant-table-tbody > tr > td,
+.data-panel .ant-table-tbody-virtual .ant-table-cell {
+  border-bottom: 1px solid #eef2f7;
+}
+
+.data-panel .ant-table .ant-table-cell-row-hover {
+  background: #f8fafc;
+}
+
+.data-panel .data-cell-name {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.data-panel .data-cell-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Body value cells hand their padding to the edit button so its hover pill
+   fills the slot and the numerals still line up with the 8px header inset. */
+.data-panel .ant-table-tbody > tr > td.data-cell-value,
+.data-panel .ant-table-tbody-virtual .ant-table-cell.data-cell-value {
+  padding: 3px 2px;
+}
+
 .cell-edit-button {
   display: block;
   width: 100%;
   border: none;
+  border-radius: 6px;
   background: none;
-  padding: 0;
+  padding: 3px 6px;
   color: inherit;
   font: inherit;
-  text-align: left;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
   cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
 
 .cell-edit-button:hover {
+  background: #eef4ff;
   color: #1677ff;
+}
+
+.cell-edit-button:focus-visible {
+  outline: 2px solid #1677ff;
+  outline-offset: -1px;
+}
+
+.cell-empty {
+  color: #cbd5e1;
+}
+
+.cell-edit-input {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .ant-form-item {

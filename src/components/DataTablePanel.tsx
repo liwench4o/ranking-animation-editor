@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Alert, Collapse, Input, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { updateDatasetValue } from '../data/dataset';
@@ -23,7 +23,17 @@ interface EditingCell {
   periodIndex: number;
 }
 
-export function DataTablePanel({
+// One shared formatter: per-cell toLocaleString would build a fresh
+// NumberFormat for every one of the grid's thousands of values.
+const numberFormat = new Intl.NumberFormat('en-US');
+
+const NAME_COLUMN_WIDTH = 148;
+const VALUE_COLUMN_WIDTH = 88;
+const TABLE_BODY_HEIGHT = 420;
+
+// memo: the panel stays mounted once opened, and App re-renders every
+// animation frame during playback — identical props must skip the table.
+export const DataTablePanel = memo(function DataTablePanel({
   dataset,
   error,
   open,
@@ -42,62 +52,76 @@ export function DataTablePanel({
     [dataset],
   );
 
-  const commitEdit = (entity: string, periodIndex: number, raw: string) => {
-    setEditing(null);
-    const cleaned = raw.replace(/[,\s]/g, '');
-    const parsed = cleaned === '' ? null : Number(cleaned);
+  const commitEdit = useCallback(
+    (entity: string, periodIndex: number, raw: string) => {
+      setEditing(null);
+      const cleaned = raw.replace(/[,\s]/g, '');
+      const parsed = cleaned === '' ? null : Number(cleaned);
 
-    if (parsed !== null && !Number.isFinite(parsed)) {
-      return;
-    }
+      if (parsed !== null && !Number.isFinite(parsed)) {
+        return;
+      }
 
-    onDatasetChange(updateDatasetValue(dataset, entity, periodIndex, parsed));
-  };
-
-  const columns: ColumnsType<TableRow> = [
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      fixed: 'left',
-      width: 132,
-      sorter: (a, b) => a.name.localeCompare(b.name),
+      onDatasetChange(updateDatasetValue(dataset, entity, periodIndex, parsed));
     },
-    ...dataset.periods.map((period, periodIndex) => ({
-      title: period.label,
-      key: `${period.key}:${periodIndex}`,
-      width: 76,
-      sorter: (a: TableRow, b: TableRow) => (a.values[periodIndex] ?? 0) - (b.values[periodIndex] ?? 0),
-      render: (_: unknown, row: TableRow) => {
-        const isEditing = editing?.entity === row.name && editing.periodIndex === periodIndex;
-        const value = row.values[periodIndex];
+    [dataset, onDatasetChange],
+  );
 
-        if (isEditing) {
-          return (
-            <Input
-              aria-label={`Value for ${row.name} ${period.label}`}
-              autoFocus
-              defaultValue={value ?? ''}
-              size="small"
-              onBlur={(event) => commitEdit(row.name, periodIndex, event.target.value)}
-              onPressEnter={(event) => commitEdit(row.name, periodIndex, event.currentTarget.value)}
-            />
-          );
-        }
-
-        return (
-          <button
-            aria-label={`Edit ${row.name} ${period.label}`}
-            className="cell-edit-button"
-            type="button"
-            onClick={() => setEditing({ entity: row.name, periodIndex })}
-          >
-            {value !== null && value !== undefined ? value.toLocaleString('en-US') : '—'}
-          </button>
-        );
+  const columns = useMemo<ColumnsType<TableRow>>(
+    () => [
+      {
+        title: 'Name',
+        dataIndex: 'name',
+        key: 'name',
+        fixed: 'left',
+        width: NAME_COLUMN_WIDTH,
+        className: 'data-cell-name',
+        sorter: (a, b) => a.name.localeCompare(b.name),
       },
-    })),
-  ];
+      ...dataset.periods.map((period, periodIndex) => ({
+        title: period.label,
+        key: `${period.key}:${periodIndex}`,
+        width: VALUE_COLUMN_WIDTH,
+        align: 'right' as const,
+        className: 'data-cell-value',
+        sorter: (a: TableRow, b: TableRow) => (a.values[periodIndex] ?? 0) - (b.values[periodIndex] ?? 0),
+        render: (_: unknown, row: TableRow) => {
+          const isEditing = editing?.entity === row.name && editing.periodIndex === periodIndex;
+          const value = row.values[periodIndex];
+
+          if (isEditing) {
+            return (
+              <Input
+                aria-label={`Value for ${row.name} ${period.label}`}
+                autoFocus
+                className="cell-edit-input"
+                defaultValue={value ?? ''}
+                size="small"
+                onBlur={(event) => commitEdit(row.name, periodIndex, event.target.value)}
+                onPressEnter={(event) => commitEdit(row.name, periodIndex, event.currentTarget.value)}
+              />
+            );
+          }
+
+          return (
+            <button
+              aria-label={`Edit ${row.name} ${period.label}`}
+              className="cell-edit-button"
+              type="button"
+              onClick={() => setEditing({ entity: row.name, periodIndex })}
+            >
+              {value !== null && value !== undefined ? (
+                numberFormat.format(value)
+              ) : (
+                <span className="cell-empty">—</span>
+              )}
+            </button>
+          );
+        },
+      })),
+    ],
+    [commitEdit, dataset.periods, editing],
+  );
 
   return (
     <section className="data-panel">
@@ -124,8 +148,13 @@ export function DataTablePanel({
                   dataSource={rows}
                   pagination={false}
                   rowKey="key"
-                  scroll={{ x: Math.max(860, (dataset.periods.length + 1) * 82), y: 420 }}
+                  scroll={{
+                    x: Math.max(860, NAME_COLUMN_WIDTH + dataset.periods.length * VALUE_COLUMN_WIDTH),
+                    y: TABLE_BODY_HEIGHT,
+                  }}
+                  showSorterTooltip={false}
                   size="small"
+                  virtual
                 />
               </>
             ),
@@ -135,4 +164,4 @@ export function DataTablePanel({
       />
     </section>
   );
-}
+});
