@@ -6,7 +6,6 @@ import { datasetFromRows } from './data/parseTimeSeries';
 import brandValueRows from '../data/brand_values.csv';
 import categoryBrandRows from '../data/category-brands.csv';
 import spotifyRows from '../data/spotify-us-weekly-16.csv';
-import testRows from '../data/test.csv';
 import type { DatasetMeta } from './types';
 
 const container = document.getElementById('container');
@@ -45,10 +44,6 @@ const datasetPresets = [
   makePreset('spotify-us-weekly-16', 'spotify-us-weekly-16.csv', spotifyRows as unknown as Array<Record<string, unknown>>, {
     name: 'Spotify US weekly top tracks',
     valueLabel: 'Streams',
-  }),
-  makePreset('test', 'test.csv', testRows as unknown as Array<Record<string, unknown>>, {
-    name: 'Sample ranking',
-    valueLabel: 'Score',
   }),
 ];
 
