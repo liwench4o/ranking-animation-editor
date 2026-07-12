@@ -89,8 +89,8 @@ export function ChartCanvas({
       svg.append('g').attr('class', 'ghost-group');
       svg.append('g').attr('class', 'label-group');
       svg.append('g').attr('class', 'overlay-group');
-      svg.append('text').attr('class', 'chart-title').attr('x', 0).attr('y', 18);
-      svg.append('text').attr('class', 'chart-subtitle').attr('x', 0).attr('y', 42);
+      svg.append('text').attr('class', 'chart-title').attr('x', 0).attr('y', 12);
+      svg.append('text').attr('class', 'chart-subtitle').attr('x', 0).attr('y', 33);
       svg
         .append('text')
         .attr('class', 'year-ticker')
@@ -104,6 +104,17 @@ export function ChartCanvas({
         .attr('x', WIDTH - 8)
         .attr('y', HEIGHT - 10)
         .attr('text-anchor', 'end');
+      // Editor-only crop guide marking the exact frame the export captures
+      // (the viewBox); inset half the stroke so the line isn't clipped when
+      // the shell matches the frame's aspect ratio. renderFrame never draws
+      // it, so exports stay clean.
+      svg
+        .append('rect')
+        .attr('class', 'export-frame-outline')
+        .attr('x', -FRAME_PADDING + 0.5)
+        .attr('y', -FRAME_PADDING + 0.5)
+        .attr('width', FRAME_WIDTH - 1)
+        .attr('height', FRAME_HEIGHT - 1);
     }
 
     svg.select<SVGTextElement>('.chart-title').text(title);

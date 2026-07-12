@@ -206,11 +206,11 @@ export function renderChartFrame(ctx: CanvasRenderingContext2D, scene: FrameScen
   ctx.fillStyle = theme.title;
   ctx.font = `700 30px ${FONT_STACK}`;
   ctx.textAlign = 'left';
-  ctx.fillText(title, 0, 18);
+  ctx.fillText(title, 0, 12);
 
   ctx.fillStyle = theme.subtitle;
   ctx.font = `600 14px ${FONT_STACK}`;
-  ctx.fillText(subtitle, 0, 42);
+  ctx.fillText(subtitle, 0, 33);
 
   ctx.fillStyle = theme.ticker;
   ctx.globalAlpha = 0.18;
@@ -249,9 +249,10 @@ function drawAxis(ctx: CanvasRenderingContext2D, x: d3.ScaleLinear<number, numbe
     ctx.lineTo(tickX, gridBottom);
     ctx.stroke();
 
-    // The live axis removes the first tick label; mirror that.
+    // The live axis removes the first tick label; mirror that. d3.axisTop puts
+    // tick baselines at tickPadding (3px) above the axis line.
     if (tick !== ticks[0]) {
-      ctx.fillText(format(tick), tickX, MARGIN.TOP - 8);
+      ctx.fillText(format(tick), tickX, MARGIN.TOP - 3);
     }
   }
 }

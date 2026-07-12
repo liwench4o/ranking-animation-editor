@@ -247,8 +247,10 @@ export async function exportMp4(options: ExportOptions): Promise<Blob> {
 }
 
 async function pickAvcCodec(width: number, height: number, framerate: number): Promise<string> {
-  // high@4.0 first for 1600x1040@30, then progressively safer profiles.
-  const candidates = ['avc1.640028', 'avc1.4d0028', 'avc1.42001f'];
+  // 2048×1152 exceeds the level-4.0 macroblock budget, so try high@5.0 first,
+  // then progressively safer profiles for browsers that are lenient about the
+  // level/resolution pairing.
+  const candidates = ['avc1.640032', 'avc1.640028', 'avc1.4d0028', 'avc1.42001f'];
 
   for (const codec of candidates) {
     const support = await VideoEncoder.isConfigSupported({ codec, width, height, framerate });

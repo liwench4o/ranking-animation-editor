@@ -135,11 +135,11 @@ describe('App', () => {
 
     const colorMapSelect = screen.getByRole('combobox', { name: 'Color map' });
     await userEvent.click(colorMapSelect);
-    await userEvent.click(await screen.findByText('Soft contrast'));
+    await userEvent.click(await screen.findByText('Modern'));
 
     expect(screen.getByText('Updated ranking')).toBeTruthy();
     expect(screen.getByText('Updated metric')).toBeTruthy();
-    expect(screen.getAllByText('Soft contrast').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Modern').length).toBeGreaterThan(0);
     expect(document.querySelectorAll('.color-map-swatch').length).toBeGreaterThanOrEqual(16);
     expect(screen.queryByLabelText('Source')).toBeNull();
     expect(screen.queryByText(/Source:/)).toBeNull();
@@ -153,12 +153,10 @@ describe('App', () => {
     expect(betaBar?.getAttribute('stroke')).toBe(SELECTION_COLOR);
     expect(SELECTION_COLOR).toBe('#1677ff');
 
+    // Implicit mode and the Contour effect are the defaults, so adding right
+    // away creates a contour spec.
     await userEvent.click(screen.getByRole('combobox', { name: 'Select Item(s)' }));
     await userEvent.click(await screen.findByTitle('Alpha'));
-    await userEvent.click(screen.getByTitle('Implicit'));
-    // getByTitle targets the segmented option; the timeline legend also shows
-    // "Contour" as plain text, so getByText would be ambiguous.
-    await userEvent.click(screen.getByTitle('Contour'));
     await userEvent.click(screen.getByRole('button', { name: /Add/ }));
 
     const alphaBar = document.querySelector<SVGRectElement>('#Alpha');
@@ -215,18 +213,18 @@ describe('App', () => {
     expect(slider.getAttribute('aria-valuenow')).toBe('0');
   });
 
-  it('updates effect options when foreshadowing mode changes', async () => {
+  it('defaults to implicit mode and updates effect options when the mode changes', async () => {
     render(<App initialDataset={makeDataset()} />);
 
     // Titles target the effect segmented options; the timeline legend renders
     // all four effect names as plain text, so getByText would be ambiguous and
-    // "Pre-scene" would never disappear.
-    expect(screen.getByTitle('Pre-scene')).toBeTruthy();
-
-    await userEvent.click(screen.getByTitle('Implicit'));
-
+    // "De-Emphasis" would never disappear.
     expect(screen.getByTitle('De-Emphasis')).toBeTruthy();
-    expect(screen.queryByTitle('Pre-scene')).toBeNull();
+
+    await userEvent.click(screen.getByTitle('Explicit'));
+
+    expect(screen.getByTitle('Pre-scene')).toBeTruthy();
+    expect(screen.queryByTitle('De-Emphasis')).toBeNull();
   });
 
   it('adds a foreshadowing spec from the editor and lists it on the timeline', async () => {
@@ -237,6 +235,8 @@ describe('App', () => {
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Select Item(s)' }));
     await userEvent.click(await screen.findByTitle('Alpha'));
+    // Prologue lives under the explicit mode, which is no longer the default.
+    await userEvent.click(screen.getByTitle('Explicit'));
     await userEvent.type(screen.getByLabelText('Caption'), 'Alpha overtakes Beta');
     await userEvent.click(screen.getByRole('button', { name: /Add/ }));
 
@@ -256,6 +256,7 @@ describe('App', () => {
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Select Item(s)' }));
     await userEvent.click(await screen.findByTitle('Alpha'));
+    await userEvent.click(screen.getByTitle('Explicit'));
 
     const addButton = screen.getByRole('button', { name: /Add/ });
     const tooltipHost = addButton.closest('.add-button-tooltip');
@@ -270,6 +271,7 @@ describe('App', () => {
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Select Item(s)' }));
     await userEvent.click(await screen.findByTitle('Alpha'));
+    await userEvent.click(screen.getByTitle('Explicit'));
     await userEvent.type(
       screen.getByLabelText('Caption'),
       'Alpha rises while Beta slows across the market and the audience should see this in a compact banner',

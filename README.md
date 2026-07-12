@@ -1,14 +1,16 @@
 # foreshadowing
 
-Visual foreshadowing editor and animated ranking preview — a browser-based **bar chart race** editor. Load a time-series CSV, tune the animation and styling, preview it live, and export the result.
+A browser-based **bar chart race** editor with visual foreshadowing and an animated ranking preview. Load a time-series CSV, tune the animation and styling, preview it live, and export the result.
 
-![Visual Foreshadowing editor — a bar chart race of top global brands, with highlighting, animation, and export controls](screenshot.png)
+![Visual Foreshadowing editor showing a bar chart race of top global brands, with highlighting, animation, and export controls](screenshot.png)
 
 ## Getting started
 
 ```bash
 npm install      # install dependencies
 npm start        # start the dev server (webpack-dev-server)
+npm test         # run the test suite (vitest)
+npm run build    # production build into dist/
 ```
 
 Then open the URL printed in the terminal.
@@ -32,7 +34,7 @@ src/
   components/    React UI (control panel, timeline, canvas, export)
   data/          dataset parsing and time-series helpers
   export/        GIF/MP4 frame rendering and encoding
-  foreshadowing/ foreshadowing option resolution
+  foreshadowing/ foreshadowing options, effect envelopes, and resolution
   index.tsx      entry point + built-in presets
 data/            sample CSV datasets
 ```

@@ -16,14 +16,7 @@ import { ExportControls } from './ExportControls';
 import { TimelinePanel } from './TimelinePanel';
 import { computeBalancedPreviewHeight } from './previewLayout';
 import { DEFAULT_INTERPOLATION, DEFAULT_PERIOD_DURATION } from '../chart/constants';
-import {
-  COLOR_MAP_OPTIONS,
-  DEFAULT_COLOR_MAP,
-  createColorScale,
-  swatchColorsFor,
-  visibleColorKeys,
-  type ColorMapName,
-} from '../chart/color';
+import { DEFAULT_COLOR_MAP, createColorScale, type ColorMapName } from '../chart/color';
 import { DEFAULT_CHART_THEME, getChartTheme, type ChartThemeName } from '../chart/theme';
 import { computeKeyframes } from '../data/dataset';
 import { parseDatasetFile } from '../data/parseTimeSeries';
@@ -77,8 +70,8 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
   const [periodDuration, setPeriodDuration] = useState(DEFAULT_PERIOD_DURATION);
   const [colorMap, setColorMap] = useState<ColorMapName>(DEFAULT_COLOR_MAP);
   const [chartThemeName, setChartThemeName] = useState<ChartThemeName>(DEFAULT_CHART_THEME);
-  const [mode, setMode] = useState<ForeshadowingMode>('explicit');
-  const [effect, setEffect] = useState<ForeshadowingEffect>('prologue');
+  const [mode, setMode] = useState<ForeshadowingMode>('implicit');
+  const [effect, setEffect] = useState<ForeshadowingEffect>('contour');
   const [selectedNames, setSelectedNames] = useState<string[]>([]);
   const [playing, setPlaying] = useState(false);
   const [frameIndex, setFrameIndex] = useState(0);
@@ -101,15 +94,6 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
   const maxPeriodIndex = Math.max(0, dataset.periods.length - 1);
   const clampedFrameIndex = Math.min(frameIndex, maxFrameIndex);
   const currentKeyframe = keyframes[clampedFrameIndex];
-  // Preview each palette with the colors it assigns to the bars on screen, so
-  // the dropdown swatches track the canvas instead of the palette's raw order.
-  const colorMapSwatches = useMemo(() => {
-    const keys = visibleColorKeys(currentKeyframe?.data);
-
-    return Object.fromEntries(
-      COLOR_MAP_OPTIONS.map((option) => [option.value, swatchColorsFor(dataset, option.value, keys)]),
-    ) as Record<ColorMapName, string[]>;
-  }, [currentKeyframe, dataset]);
   const frameTime = clampedFrameIndex / interpolation;
   const frameDuration = Math.max(16, periodDuration / interpolation);
   const currentPeriodIndex = Math.min(maxPeriodIndex, Math.floor(frameTime));
@@ -443,7 +427,6 @@ export function App({ initialDataset, datasetPresets = [] }: AppProps) {
                   brandOptions={dataset.entities}
                   caption={caption}
                   colorMap={colorMap}
-                  colorMapSwatches={colorMapSwatches}
                   effect={effect}
                   interpolation={interpolation}
                   maxRangeIndex={maxPeriodIndex}

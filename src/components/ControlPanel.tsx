@@ -26,7 +26,6 @@ interface ControlPanelProps {
   brandOptions: string[];
   caption: string;
   colorMap: ColorMapName;
-  colorMapSwatches: Record<ColorMapName, string[]>;
   effect: ForeshadowingEffect;
   interpolation: number;
   maxRangeIndex: number;
@@ -56,7 +55,6 @@ export function ControlPanel({
   brandOptions,
   caption,
   colorMap,
-  colorMapSwatches,
   effect,
   interpolation,
   maxRangeIndex,
@@ -82,27 +80,38 @@ export function ControlPanel({
 }: ControlPanelProps) {
   const effectOptions = getEffectOptions(mode);
   const formatPeriod = (index: number) => periodLabels[index] ?? String(index);
+  // Swatches always preview the palette's own leading colors, never the bars
+  // currently on screen, so the strip stays put while the timeline plays.
   const colorMapOptions = COLOR_MAP_OPTIONS.map((option) => {
-    const swatches =
-      colorMapSwatches[option.value] ?? option.colors.slice(0, 6);
+    const swatchStrip = (
+      <span aria-hidden="true" className="color-map-swatch-list">
+        {option.colors.slice(0, 6).map((color, index) => (
+          // Match the bars, which render at BASE_OPACITY over the chart.
+          <span
+            className="color-map-swatch"
+            key={`${color}-${index}`}
+            style={{ backgroundColor: color, opacity: BASE_OPACITY }}
+          />
+        ))}
+      </span>
+    );
 
     return {
       label: (
-        <span className="color-map-option" title={option.label}>
-          <span aria-hidden="true" className="color-map-swatch-list">
-            {swatches.map((color, index) => (
-              // Match the bars, which render at BASE_OPACITY over the chart.
-              <span
-                className="color-map-swatch"
-                key={`${color}-${index}`}
-                style={{ backgroundColor: color, opacity: BASE_OPACITY }}
-              />
-            ))}
-          </span>
+        <span className="color-map-option">
+          {swatchStrip}
           <span className="color-map-name">{option.label}</span>
         </span>
       ),
-      title: option.label,
+      // The closed select shows only the swatch strip; the palette name lives
+      // in a hover tooltip instead.
+      selectedLabel: (
+        <Tooltip title={option.label}>
+          <span aria-label={option.label} className="color-map-option">
+            {swatchStrip}
+          </span>
+        </Tooltip>
+      ),
       value: option.value,
     };
   });
@@ -131,8 +140,8 @@ export function ControlPanel({
             <Segmented
               block
               options={[
-                { label: 'Explicit', value: 'explicit' },
                 { label: 'Implicit', value: 'implicit' },
+                { label: 'Explicit', value: 'explicit' },
               ]}
               value={mode}
               onChange={(value) => onModeChange(value as ForeshadowingMode)}
@@ -241,7 +250,10 @@ export function ControlPanel({
             </label>
             <Select
               aria-label="Color map"
+              className="color-map-select"
+              classNames={{ popup: { root: 'color-map-select-dropdown' } }}
               id="color-map-select"
+              optionLabelProp="selectedLabel"
               options={colorMapOptions}
               value={colorMap}
               onChange={(value) => onColorMapChange(value)}

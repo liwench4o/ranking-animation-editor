@@ -16,4 +16,4 @@ export function getEffectOptions(mode: ForeshadowingMode): EffectOption[] {
 
 // Every effect in control-panel order, for the timeline legend that colors the
 // spec bands by effect.
-export const ALL_EFFECTS: EffectOption[] = [...explicitEffects, ...implicitEffects];
+export const ALL_EFFECTS: EffectOption[] = [...implicitEffects, ...explicitEffects];

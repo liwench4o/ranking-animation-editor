@@ -21,6 +21,13 @@ describe('export frame dimensions', () => {
     expect((FRAME_WIDTH * MP4_SCALE) % 2).toBe(0);
     expect((FRAME_HEIGHT * MP4_SCALE) % 2).toBe(0);
   });
+
+  it('exports an exact 16:9 frame at standard resolutions', () => {
+    expect(FRAME_WIDTH * 9).toBe(FRAME_HEIGHT * 16);
+    expect(Number.isInteger(FRAME_WIDTH)).toBe(true);
+    expect([FRAME_WIDTH, FRAME_HEIGHT]).toEqual([1024, 576]);
+    expect([FRAME_WIDTH * MP4_SCALE, FRAME_HEIGHT * MP4_SCALE]).toEqual([2048, 1152]);
+  });
 });
 
 describe('planFrames', () => {

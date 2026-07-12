@@ -288,6 +288,18 @@ textarea {
   min-width: 0;
 }
 
+/* The swatch strip carries no text baseline, so antd's line-height layout
+   aligns its bottom edge to the label baseline and it hangs above center.
+   Flex-center the select's content wrappers so the strip sits with equal
+   space above and below, in both the closed field and the open dropdown.
+   (The closed-field selector repeats antd's own chain to out-rank its
+   `display: block` rule, which sits at three class levels.) */
+.color-map-select.ant-select-single .ant-select-selector .ant-select-selection-item,
+.color-map-select-dropdown .ant-select-item-option-content {
+  display: flex;
+  align-items: center;
+}
+
 .color-map-swatch-list {
   display: inline-flex;
   flex: 0 0 auto;
@@ -334,6 +346,15 @@ textarea {
 
 .ranking-chart .chart-background {
   fill: #ffffff;
+}
+
+/* Editor-only guide outlining the exported GIF/MP4 frame (the SVG viewBox,
+   including FRAME_PADDING). The export canvas never draws this. */
+.ranking-chart .export-frame-outline {
+  fill: none;
+  stroke: #cbd5e1;
+  stroke-width: 1;
+  stroke-dasharray: 6 6;
 }
 
 .ranking-chart .chart-title {
@@ -419,6 +440,10 @@ textarea {
 
 .chart-shell[data-theme='dark'] .chart-background {
   fill: #0b0e14;
+}
+
+.chart-shell[data-theme='dark'] .export-frame-outline {
+  stroke: #334155;
 }
 
 .chart-shell[data-theme='dark'] .chart-title {
