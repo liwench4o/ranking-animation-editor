@@ -36,7 +36,7 @@ export default {
     assetModuleFilename: 'assets/[name].[contenthash:8][ext][query]',
     clean: true,
     path: paths.dist,
-    publicPath: '/',
+    publicPath: './',
   },
   module: {
     rules: [
